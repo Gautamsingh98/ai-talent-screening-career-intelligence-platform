@@ -1,7 +1,7 @@
-export default function AppliedJobs() {
+export default function Profile() {
   return (
     <div className="text-3xl font-bold">
-      Applied Jobs Page
+      Profile Page
     </div>
   );
 }
