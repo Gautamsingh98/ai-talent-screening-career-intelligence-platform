@@ -19,7 +19,7 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route  path="/candidate/dashboard" element={<Dashboard />} />
+        <Route path="/candidate/dashboard" element={<Dashboard />} />
         <Route path="/candidate/profile" element={<Profile />} />
         <Route path="/candidate/resume" element={<Resume />} />
         <Route path="/candidate/jobs" element={<Jobs />} />
@@ -28,7 +28,8 @@ export default function AppRoutes() {
         <Route path="/candidate/skill-gap" element={<SkillGap />} />
         <Route path="/candidate/career" element={<CareerRecommendation />} />
         <Route path="/candidate/interview" element={<Interview />} />
-        <Route path="/candidate/reports" element={<Reports />} />      
+        <Route path="/candidate/reports" element={<Reports />} />
+        <Route path="/candidate/jobs" element={<Jobs />} />   
       </Routes>
     </BrowserRouter>
   );

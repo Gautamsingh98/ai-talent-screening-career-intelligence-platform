@@ -11,7 +11,7 @@ export default function Navbar() {
         </h1>
 
         <p className="text-gray-500 text-sm">
-          Welcome Back 👋
+          Welcome Back 
         </p>
       </div>
 

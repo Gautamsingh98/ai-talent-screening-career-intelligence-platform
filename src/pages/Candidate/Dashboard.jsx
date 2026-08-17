@@ -1,5 +1,11 @@
 import CandidateLayout from "../../layouts/CandidateLayout";
 import StatCard from "../../components/StatCard";
+import ResumeScoreCard from "../../components/ResumeScoreCard";
+import TopSkillsCard from "../../components/TopSkillsCard";
+import RecommendedJobsCard from "../../components/RecommendedJobsCard";
+import SkillGapCard from "../../components/SkillGapCard";
+import RecentActivityCard from "../../components/RecentActivityCard";
+import InterviewProgressCard from "../../components/InterviewProgressCard";
 
 import {
   FaBriefcase,
@@ -55,7 +61,20 @@ export default function Dashboard() {
         />
 
       </div>
+    <ResumeScoreCard />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <TopSkillsCard />
+        <RecommendedJobsCard />
+    </div>
 
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <SkillGapCard />
+        <RecentActivityCard />
+
+    </div>
+    <div className="mt-8">
+        <InterviewProgressCard />
+    </div>
     </CandidateLayout>
   );
 }
