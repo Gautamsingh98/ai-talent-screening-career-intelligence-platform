@@ -12,7 +12,9 @@ import SkillGap from "../pages/Candidate/SkillGap";
 import CareerRecommendation from "../pages/Candidate/CareerRecommendation";
 import Interview from "../pages/Candidate/Interview";
 import Reports from "../pages/Candidate/Reports";
-
+import RecruiterDashboard from "../pages/Recruiter/Dashboard";
+import RecruiterJobs from "../pages/Recruiter/Jobs";
+import Applicants from "../pages/Recruiter/Applicants";
 export default function AppRoutes() {
   return (
     <BrowserRouter>
@@ -29,7 +31,10 @@ export default function AppRoutes() {
         <Route path="/candidate/career" element={<CareerRecommendation />} />
         <Route path="/candidate/interview" element={<Interview />} />
         <Route path="/candidate/reports" element={<Reports />} />
-        <Route path="/candidate/jobs" element={<Jobs />} />   
+        <Route path="/candidate/jobs" element={<Jobs />} />
+        <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+        <Route path="/recruiter/jobs" element={<RecruiterJobs />} /> 
+        <Route path="/recruiter/applicants" element={<Applicants />} />  
       </Routes>
     </BrowserRouter>
   );
