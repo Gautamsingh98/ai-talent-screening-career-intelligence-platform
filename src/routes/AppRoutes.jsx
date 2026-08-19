@@ -15,6 +15,8 @@ import Reports from "../pages/Candidate/Reports";
 import RecruiterDashboard from "../pages/Recruiter/Dashboard";
 import RecruiterJobs from "../pages/Recruiter/Jobs";
 import Applicants from "../pages/Recruiter/Applicants";
+import RecruiterReports from "../pages/Recruiter/Reports";
+
 export default function AppRoutes() {
   return (
     <BrowserRouter>
@@ -34,7 +36,8 @@ export default function AppRoutes() {
         <Route path="/candidate/jobs" element={<Jobs />} />
         <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
         <Route path="/recruiter/jobs" element={<RecruiterJobs />} /> 
-        <Route path="/recruiter/applicants" element={<Applicants />} />  
+        <Route path="/recruiter/applicants" element={<Applicants />} />
+        <Route path="/recruiter/reports" element={<RecruiterReports />} />  
       </Routes>
     </BrowserRouter>
   );
