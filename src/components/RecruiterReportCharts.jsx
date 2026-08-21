@@ -1,7 +1,33 @@
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+const hiringTrend = [
+  { month: "Jan", hired: 2 },
+  { month: "Feb", hired: 4 },
+  { month: "Mar", hired: 6 },
+  { month: "Apr", hired: 5 },
+  { month: "May", hired: 8 },
+  { month: "Jun", hired: 10 },
+];
+
+const applicationsByRole = [
+  { role: "Python", applications: 35 },
+  { role: "Data Science", applications: 48 },
+  { role: "AI", applications: 28 },
+  { role: "ML", applications: 20 },
+];
+
 export default function RecruiterReportCharts() {
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
-
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Hiring Trend */}
       <div className="bg-white rounded-xl shadow-md p-6">
 
@@ -9,11 +35,32 @@ export default function RecruiterReportCharts() {
           Hiring Trend
         </h2>
 
-        <div className="h-72 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg text-gray-500">
+        <div className="h-72">
 
-          Line Chart Placeholder
+  <ResponsiveContainer width="100%" height="100%">
 
-        </div>
+    <LineChart data={hiringTrend}>
+
+      <CartesianGrid strokeDasharray="3 3" />
+
+      <XAxis dataKey="month" />
+
+      <YAxis />
+
+      <Tooltip />
+
+      <Line
+        type="monotone"
+        dataKey="hired"
+        stroke="#2563EB"
+        strokeWidth={3}
+      />
+
+    </LineChart>
+
+  </ResponsiveContainer>
+
+</div>
 
       </div>
 
@@ -24,11 +71,30 @@ export default function RecruiterReportCharts() {
           Applications by Job Role
         </h2>
 
-        <div className="h-72 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg text-gray-500">
+        <div className="h-72">
 
-          Bar Chart Placeholder
+  <ResponsiveContainer width="100%" height="100%">
 
-        </div>
+    <BarChart data={applicationsByRole}>
+
+      <CartesianGrid strokeDasharray="3 3" />
+
+      <XAxis dataKey="role" />
+
+      <YAxis />
+
+      <Tooltip />
+
+      <Bar
+        dataKey="applications"
+        fill="#16A34A"
+      />
+
+    </BarChart>
+
+  </ResponsiveContainer>
+
+</div>
 
       </div>
 

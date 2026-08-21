@@ -68,32 +68,26 @@ export default function ApplicantsTable() {
   Applicant List
 </h2>
 
-<div className="mb-6">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-  {/* Search Box */}
   <input
     type="text"
     placeholder="Search candidate..."
     value={search}
     onChange={(e) => setSearch(e.target.value)}
-    className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+    className="border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
   />
 
-  {/* Status Filter */}
-  <div className="mt-4">
-
-    <select
-      value={status}
-      onChange={(e) => setStatus(e.target.value)}
-      className="border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-    >
-      <option value="All">All Applicants</option>
-      <option value="Pending">Pending</option>
-      <option value="Shortlisted">Shortlisted</option>
-      <option value="Rejected">Rejected</option>
-    </select>
-
-  </div>
+  <select
+    value={status}
+    onChange={(e) => setStatus(e.target.value)}
+    className="border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="All">All Applicants</option>
+    <option value="Pending">Pending</option>
+    <option value="Shortlisted">Shortlisted</option>
+    <option value="Rejected">Rejected</option>
+  </select>
 
 </div>
 
