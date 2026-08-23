@@ -1,21 +1,25 @@
 import AdminLayout from "../../layouts/AdminLayout";
-import AdminUsersTable from "../../components/AdminUsersTable";
+import AdminJobsTable from "../../components/AdminJobsTable";
 
-export default function Users() {
+export default function AdminJobs() {
   return (
     <AdminLayout>
 
       {/* Page Heading */}
       <div className="mb-8">
+
         <h1 className="text-3xl font-bold text-gray-800">
-          User Management
+          Jobs Management
         </h1>
 
         <p className="text-gray-500 mt-2">
-          Manage candidates and recruiters on the platform.
+          View and manage jobs posted by recruiters.
         </p>
+
       </div>
-    <AdminUsersTable />
+         {/* Jobs Table */}
+          <AdminJobsTable />
+
     </AdminLayout>
   );
 }

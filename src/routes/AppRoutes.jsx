@@ -17,6 +17,9 @@ import RecruiterJobs from "../pages/Recruiter/Jobs";
 import Applicants from "../pages/Recruiter/Applicants";
 import RecruiterReports from "../pages/Recruiter/Reports";
 import Analytics from "../pages/Recruiter/Analytics";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
+import Users from "../pages/Admin/Users";
+import AdminJobs from "../pages/Admin/AdminJobs";
 
 export default function AppRoutes() {
   return (
@@ -34,12 +37,14 @@ export default function AppRoutes() {
         <Route path="/candidate/career" element={<CareerRecommendation />} />
         <Route path="/candidate/interview" element={<Interview />} />
         <Route path="/candidate/reports" element={<Reports />} />
-        <Route path="/candidate/jobs" element={<Jobs />} />
         <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
         <Route path="/recruiter/jobs" element={<RecruiterJobs />} /> 
         <Route path="/recruiter/applicants" element={<Applicants />} />
         <Route path="/recruiter/reports" element={<RecruiterReports />} />
-        <Route path="/recruiter/analytics" element={<Analytics />} />  
+        <Route path="/recruiter/analytics" element={<Analytics />} /> 
+        <Route path="/admin/Admindashboard" element={<AdminDashboard />} /> 
+        <Route path="/admin/users"  element={<Users />} />
+        <Route path="/admin/Adminjobs" element={<AdminJobs />} />
       </Routes>
     </BrowserRouter>
   );
