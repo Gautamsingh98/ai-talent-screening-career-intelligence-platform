@@ -1,66 +1,148 @@
+import { useState } from "react";
 import {
   FaUserPlus,
   FaBriefcase,
-  FaCheckCircle,
   FaFileAlt,
+  FaCheckCircle,
 } from "react-icons/fa";
 
 export default function AdminRecentActivity() {
+  const [filter, setFilter] = useState("all");
+
   const activities = [
     {
-      title: "New candidate registered",
-      description: "Aarav Sharma joined the platform",
+      type: "user",
+      title: "New Candidate Registered",
+      description: "Aarav Sharma created a candidate account.",
       time: "10 minutes ago",
       icon: <FaUserPlus />,
       bg: "bg-blue-100",
       color: "text-blue-600",
     },
     {
-      title: "New recruiter registered",
-      description: "Tech Solutions created an account",
-      time: "30 minutes ago",
-      icon: <FaUserPlus />,
+      type: "job",
+      title: "New Job Posted",
+      description: "Tech Solutions posted a Data Scientist position.",
+      time: "25 minutes ago",
+      icon: <FaBriefcase />,
       bg: "bg-purple-100",
       color: "text-purple-600",
     },
     {
-      title: "New job posted",
-      description: "Data Scientist position added",
-      time: "1 hour ago",
-      icon: <FaBriefcase />,
-      bg: "bg-green-100",
-      color: "text-green-600",
-    },
-    {
-      title: "Candidate shortlisted",
-      description: "Priya Singh was shortlisted",
-      time: "2 hours ago",
-      icon: <FaCheckCircle />,
+      type: "application",
+      title: "New Application",
+      description: "A candidate applied for Python Developer.",
+      time: "45 minutes ago",
+      icon: <FaFileAlt />,
       bg: "bg-yellow-100",
       color: "text-yellow-600",
     },
     {
-      title: "New resume uploaded",
-      description: "Rohan Gupta uploaded a resume",
-      time: "3 hours ago",
-      icon: <FaFileAlt />,
-      bg: "bg-red-100",
-      color: "text-red-600",
+      type: "hire",
+      title: "Candidate Hired",
+      description: "Rohan Gupta was hired for AI Engineer.",
+      time: "1 hour ago",
+      icon: <FaCheckCircle />,
+      bg: "bg-green-100",
+      color: "text-green-600",
+    },
+    {
+      type: "user",
+      title: "New Recruiter Registered",
+      description: "AI Innovations joined the platform.",
+      time: "2 hours ago",
+      icon: <FaUserPlus />,
+      bg: "bg-blue-100",
+      color: "text-blue-600",
     },
   ];
 
+  const filteredActivities =
+    filter === "all"
+      ? activities
+      : activities.filter((activity) => activity.type === filter);
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-8">
+    <div className="bg-white rounded-xl shadow-md p-6 mt-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 
-        <h2 className="text-xl font-bold text-gray-800">
-          Recent Activity
-        </h2>
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">
+            Recent Platform Activity
+          </h2>
 
-        <button className="text-blue-600 text-sm font-medium hover:text-blue-800">
+          <p className="text-sm text-gray-500 mt-1">
+            Latest activity across the platform
+          </p>
+        </div>
+
+        <button
+          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+          onClick={() => alert("All activity will be available here.")}
+        >
           View All
+        </button>
+
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-6">
+
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            filter === "all"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          All
+        </button>
+
+        <button
+          onClick={() => setFilter("user")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            filter === "user"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Users
+        </button>
+
+        <button
+          onClick={() => setFilter("job")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            filter === "job"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Jobs
+        </button>
+
+        <button
+          onClick={() => setFilter("application")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            filter === "application"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Applications
+        </button>
+
+        <button
+          onClick={() => setFilter("hire")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            filter === "hire"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          Hires
         </button>
 
       </div>
@@ -68,39 +150,50 @@ export default function AdminRecentActivity() {
       {/* Activities */}
       <div className="space-y-5">
 
-        {activities.map((activity, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-4"
-          >
+        {filteredActivities.length > 0 ? (
+          filteredActivities.map((activity, index) => (
 
-            {/* Icon */}
             <div
-              className={`${activity.bg} ${activity.color} w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0`}
+              key={index}
+              className="flex items-start gap-4 border-b last:border-b-0 pb-5 last:pb-0"
             >
-              {activity.icon}
+
+              {/* Icon */}
+              <div
+                className={`${activity.bg} ${activity.color} w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0`}
+              >
+                {activity.icon}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1">
+
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+
+                  <h3 className="font-semibold text-gray-800">
+                    {activity.title}
+                  </h3>
+
+                  <span className="text-xs text-gray-400">
+                    {activity.time}
+                  </span>
+
+                </div>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  {activity.description}
+                </p>
+
+              </div>
+
             </div>
 
-            {/* Information */}
-            <div className="flex-1">
-
-              <h3 className="font-semibold text-gray-800">
-                {activity.title}
-              </h3>
-
-              <p className="text-sm text-gray-500">
-                {activity.description}
-              </p>
-
-            </div>
-
-            {/* Time */}
-            <span className="text-xs text-gray-400 whitespace-nowrap">
-              {activity.time}
-            </span>
-
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No activity found.
           </div>
-        ))}
+        )}
 
       </div>
 

@@ -22,31 +22,6 @@ export default function Applicants() {
       </div>
        <ApplicantSummaryCard />
 
-      {/* Search & Filter */}
-
-      <div className="bg-white rounded-xl shadow-md p-5 mb-8">
-
-        <div className="grid md:grid-cols-2 gap-4">
-
-          <input
-            type="text"
-            placeholder="Search candidate..."
-            className="border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
-          <select
-            className="border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option>All Applicants</option>
-            <option>Shortlisted</option>
-            <option>Rejected</option>
-            <option>Pending</option>
-          </select>
-
-        </div>
-
-      </div>
-
       {/* Applicants Table */}
 
       <ApplicantsTable />

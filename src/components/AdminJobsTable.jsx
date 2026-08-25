@@ -4,6 +4,12 @@ import AdminJobDetailsModal from "./AdminJobDetailsModal";
 
 export default function AdminJobsTable() {
     const [selectedJob, setSelectedJob] = useState(null);
+      const [search, setSearch] = useState("");
+      const [status, setStatus] = useState("All");
+      
+      const [currentPage, setCurrentPage] = useState(1);
+      const jobsPerPage = 3;
+
     const [jobs, setJobs] = useState([
     {
       title: "Data Scientist",
@@ -38,6 +44,29 @@ export default function AdminJobsTable() {
       status: "Active",
     },
   ]);
+    const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
+    job.title.toLowerCase().includes(search.toLowerCase()) ||
+    job.recruiter.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+    status === "All" || job.status === status;
+
+    return matchesSearch && matchesStatus;
+    });
+
+    const totalPages = Math.ceil(
+  filteredJobs.length / jobsPerPage
+);
+
+const startIndex =
+  (currentPage - 1) * jobsPerPage;
+
+const currentJobs = filteredJobs.slice(
+  startIndex,
+  startIndex + jobsPerPage
+);
+
 
   const deleteJob = (title) => {
     const confirmed = window.confirm(
@@ -58,6 +87,30 @@ export default function AdminJobsTable() {
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
 
+      {/* Filters */}
+<div className="flex flex-col md:flex-row gap-4 mb-6">
+
+  {/* Search */}
+  <input
+    type="text"
+    placeholder="Search jobs or recruiters..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+
+  {/* Status Filter */}
+  <select
+    value={status}
+    onChange={(e) => setStatus(e.target.value)}
+    className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="All">All Status</option>
+    <option value="Active">Active</option>
+    <option value="Closed">Closed</option>
+  </select>
+
+</div>
       {/* Table Header */}
       <div className="mb-6">
 
@@ -112,9 +165,9 @@ export default function AdminJobsTable() {
 
           <tbody>
 
-            {jobs.length > 0 ? (
+            {filteredJobs.length > 0 ? (
 
-              jobs.map((job) => (
+             currentJobs.map((job) => (
 
                 <tr
                   key={job.title}
@@ -212,7 +265,50 @@ export default function AdminJobsTable() {
           </tbody>
 
         </table>
+        {totalPages > 1 && (
+  <div className="flex justify-center items-center gap-2 mt-6">
 
+    <button
+      onClick={() =>
+        setCurrentPage((page) => Math.max(page - 1, 1))
+      }
+      disabled={currentPage === 1}
+      className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+    >
+      Previous
+    </button>
+
+    {Array.from(
+      { length: totalPages },
+      (_, index) => index + 1
+    ).map((page) => (
+      <button
+        key={page}
+        onClick={() => setCurrentPage(page)}
+        className={`px-4 py-2 rounded-lg ${
+          currentPage === page
+            ? "bg-blue-600 text-white"
+            : "border hover:bg-gray-100"
+        }`}
+      >
+        {page}
+      </button>
+    ))}
+
+    <button
+      onClick={() =>
+        setCurrentPage((page) =>
+          Math.min(page + 1, totalPages)
+        )
+      }
+      disabled={currentPage === totalPages}
+      className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+    >
+      Next
+    </button>
+
+  </div>
+)}
       </div>
 
           <AdminJobDetailsModal

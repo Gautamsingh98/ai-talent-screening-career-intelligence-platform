@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FaBriefcase,
   FaEye,
@@ -6,6 +7,8 @@ import {
 } from "react-icons/fa";
 
 export default function JobsTable() {
+const [search, setSearch] = useState("");
+const [status, setStatus] = useState("All");
 
   const jobs = [
     {
@@ -45,6 +48,36 @@ export default function JobsTable() {
         Job Listings
       </h2>
 
+      
+       {/* Search and Filter */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+    <input
+      type="text"
+      placeholder="Search jobs..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className="border border-gray-200 rounded-lg px-4 py-3 
+                 outline-none focus:ring-2 focus:ring-blue-500 
+                 focus:border-blue-500"
+    />
+
+    <select
+      value={status}
+      onChange={(e) => setStatus(e.target.value)}
+      className="border border-gray-200 rounded-lg px-4 py-3 
+                 outline-none focus:ring-2 focus:ring-blue-500 
+                 focus:border-blue-500 bg-white"
+    >
+      <option value="All">All Jobs</option>
+      <option value="Active">Active</option>
+      <option value="Closed">Closed</option>
+      <option value="Draft">Draft</option>
+    </select>
+
+  </div>
+
+       {/* Table */}
       <div className="overflow-x-auto">
 
         <table className="w-full">
@@ -71,7 +104,18 @@ export default function JobsTable() {
 
           <tbody>
 
-            {jobs.map((job, index) => (
+           {jobs
+           .filter((job) => {
+            const matchesSearch = job.title
+            .toLowerCase()
+            .includes(search.toLowerCase());
+
+             const matchesStatus =
+              status === "All" || job.status === status;
+
+               return matchesSearch && matchesStatus;
+                })
+              .map((job, index) => (
 
               <tr
                 key={index}
