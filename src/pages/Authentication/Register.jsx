@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaRobot,
   FaUser,
@@ -6,8 +7,92 @@ import {
   FaLock,
   FaEye,
 } from "react-icons/fa";
+import axios from "axios";
 
 export default function Register() {
+  const navigate = useNavigate();
+
+  // Form states
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Message states
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    // Check required fields
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    // Check password
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    // Check password length
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await axios.post(
+        "http://127.0.0.1:5000/api/auth/register",
+        {
+          name: name,
+          email: email,
+          password: password,
+          role: "Candidate",
+        }
+      );
+
+      setSuccess(response.data.message);
+
+      // Clear form
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+
+      // Go to login after successful registration
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+
+    } catch (error) {
+      if (error.response) {
+        setError(
+          error.response.data.message ||
+          "Registration failed."
+        );
+      } else {
+        setError(
+          "Unable to connect to the server. Please make sure Flask is running."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-700 flex items-center justify-center px-4">
 
@@ -38,76 +123,118 @@ export default function Register() {
           Register to find your dream job opportunities.
         </p>
 
-        {/* Full Name */}
-        <label className="font-semibold text-gray-700">
-          Full Name
-        </label>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-5 bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm text-center">
+            {error}
+          </div>
+        )}
 
-        <div className="mt-2 mb-5 flex items-center border rounded-lg px-4">
-          <FaUser className="text-gray-400" />
+        {/* Success Message */}
+        {success && (
+          <div className="mb-5 bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 text-sm text-center">
+            {success}
+          </div>
+        )}
 
-          <input
-            type="text"
-            placeholder="Enter full name"
-            className="w-full p-3 outline-none"
-          />
-        </div>
+        <form onSubmit={handleRegister}>
 
-        {/* Email */}
-        <label className="font-semibold text-gray-700">
-          Email
-        </label>
+          {/* Full Name */}
+          <label className="font-semibold text-gray-700">
+            Full Name
+          </label>
 
-        <div className="mt-2 mb-5 flex items-center border rounded-lg px-4">
-          <FaEnvelope className="text-gray-400" />
+          <div className="mt-2 mb-5 flex items-center border rounded-lg px-4">
+            <FaUser className="text-gray-400" />
 
-          <input
-            type="email"
-            placeholder="Enter email"
-            className="w-full p-3 outline-none"
-          />
-        </div>
+            <input
+              type="text"
+              placeholder="Enter full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 outline-none"
+            />
+          </div>
 
-        {/* Password */}
-        <label className="font-semibold text-gray-700">
-          Password
-        </label>
+          {/* Email */}
+          <label className="font-semibold text-gray-700">
+            Email
+          </label>
 
-        <div className="mt-2 mb-5 flex items-center border rounded-lg px-4">
-          <FaLock className="text-gray-400" />
+          <div className="mt-2 mb-5 flex items-center border rounded-lg px-4">
+            <FaEnvelope className="text-gray-400" />
 
-          <input
-            type="password"
-            placeholder="Enter password"
-            className="w-full p-3 outline-none"
-          />
+            <input
+              type="email"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 outline-none"
+            />
+          </div>
 
-          <FaEye className="text-gray-400 cursor-pointer" />
-        </div>
+          {/* Password */}
+          <label className="font-semibold text-gray-700">
+            Password
+          </label>
 
-        {/* Confirm Password */}
-        <label className="font-semibold text-gray-700">
-          Confirm Password
-        </label>
+          <div className="mt-2 mb-5 flex items-center border rounded-lg px-4">
+            <FaLock className="text-gray-400" />
 
-        <div className="mt-2 mb-6 flex items-center border rounded-lg px-4">
-          <FaLock className="text-gray-400" />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 outline-none"
+            />
 
-          <input
-            type="password"
-            placeholder="Confirm password"
-            className="w-full p-3 outline-none"
-          />
+            <FaEye
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-gray-400 cursor-pointer hover:text-gray-600"
+            />
+          </div>
 
-          <FaEye className="text-gray-400 cursor-pointer" />
-        </div>
+          {/* Confirm Password */}
+          <label className="font-semibold text-gray-700">
+            Confirm Password
+          </label>
 
-        {/* Register Button */}
-        <button
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition duration-300"
-        >
-          Create Candidate Account
-        </button>
+          <div className="mt-2 mb-6 flex items-center border rounded-lg px-4">
+            <FaLock className="text-gray-400" />
+
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-3 outline-none"
+            />
+
+            <FaEye
+              onClick={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
+              className="text-gray-400 cursor-pointer hover:text-gray-600"
+            />
+          </div>
+
+          {/* Register Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full text-white py-3 rounded-lg font-semibold transition duration-300 ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {loading
+              ? "Creating Account..."
+              : "Create Candidate Account"}
+          </button>
+
+        </form>
 
         {/* Login Link */}
         <p className="text-center text-gray-600 mt-6">

@@ -1,4 +1,4 @@
-import {FaSearch, FaUserCircle } from "react-icons/fa";
+import { FaSearch, FaUserCircle, FaBell } from "react-icons/fa";
 
 export default function Navbar() {
   return (
@@ -11,7 +11,7 @@ export default function Navbar() {
         </h1>
 
         <p className="text-gray-500 text-sm">
-          Welcome Back 
+          Welcome Back
         </p>
       </div>
 
@@ -30,11 +30,24 @@ export default function Navbar() {
 
       {/* Right Side */}
       <div className="flex items-center gap-5">
-      {/* Notification Bell (Will be added later) */}
-      {/* <FaBell className="text-2xl text-gray-600 cursor-pointer" />  */}
+
+        {/* Notification Bell */}
+        <div className="relative cursor-pointer">
+
+          <FaBell className="text-2xl text-gray-600 hover:text-blue-600 transition" />
+
+          {/* Notification Count */}
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            3
+          </span>
+
+        </div>
+
         <div className="flex items-center gap-2">
+
           <FaUserCircle className="text-4xl text-blue-600" />
-          <div> 
+
+          <div>
 
             <p className="font-semibold">
               Candidate
