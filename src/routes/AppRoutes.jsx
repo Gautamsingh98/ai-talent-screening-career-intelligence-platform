@@ -17,11 +17,11 @@ import RecruiterJobs from "../pages/Recruiter/Jobs";
 import Applicants from "../pages/Recruiter/Applicants";
 import RecruiterReports from "../pages/Recruiter/Reports";
 import Analytics from "../pages/Recruiter/Analytics";
-import AdminDashboard from "../pages/Admin/AdminDashboard";
+import AdminDashboard from "../pages/Admin/Dashboard";
 import Users from "../pages/Admin/Users";
-import AdminJobs from "../pages/Admin/AdminJobs";
-import AdminReports from "../pages/Admin/AdminReports";
-import AdminAnalytics from "../pages/Admin/AdminAnalytics";
+import AdminJobs from "../pages/Admin/Jobs";
+import AdminReports from "../pages/Admin/Reports";
+import AdminAnalytics from "../pages/Admin/Analytics";
 import Settings from "../pages/Admin/Settings";
 
 export default function AppRoutes() {
@@ -45,11 +45,11 @@ export default function AppRoutes() {
         <Route path="/recruiter/applicants" element={<Applicants />} />
         <Route path="/recruiter/reports" element={<RecruiterReports />} />
         <Route path="/recruiter/analytics" element={<Analytics />} /> 
-        <Route path="/admin/Admindashboard" element={<AdminDashboard />} /> 
-        <Route path="/admin/users"  element={<Users />} />
-        <Route path="/admin/adminjobs" element={<AdminJobs />} />
-        <Route path="/admin/adminreports" element={<AdminReports />} />
-        <Route path="/admin/adminanalytics" element={<AdminAnalytics />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<Users />} />
+        <Route path="/admin/jobs" element={<AdminJobs />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/settings" element={<Settings />} />
       </Routes>
     </BrowserRouter>

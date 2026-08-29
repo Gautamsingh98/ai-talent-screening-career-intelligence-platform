@@ -5,13 +5,17 @@ export default function AdminLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-gray-100">
 
+      {/* Admin Sidebar */}
       <AdminSidebar />
 
+      {/* Main Content */}
       <div className="flex-1">
 
+        {/* Admin Navbar */}
         <AdminNavbar />
 
-        <main className="p-8">
+        {/* Page Content */}
+        <main className="p-6">
           {children}
         </main>
 

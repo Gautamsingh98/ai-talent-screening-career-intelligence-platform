@@ -2,9 +2,9 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from datetime import datetime, timedelta
-
 from database import get_db_connection
-
+from middleware.auth_middleware import token_required
+from middleware.role_middleware import role_required
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -178,3 +178,22 @@ def login():
 
         if connection:
             connection.close()
+
+@auth_bp.route("/protected", methods=["GET"])
+@token_required
+def protected():
+
+    return jsonify({
+        "message": "You accessed a protected route",
+        "user": request.user
+    }), 200
+
+@auth_bp.route("/admin-test", methods=["GET"])
+@token_required
+@role_required("Admin")
+def admin_test():
+
+    return jsonify({
+        "message": "Admin access granted",
+        "user": request.user
+    }), 200

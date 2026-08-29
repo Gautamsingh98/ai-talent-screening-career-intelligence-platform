@@ -20,7 +20,7 @@ export default function AdminSidebar() {
       <nav className="space-y-2">
 
         <Link
-          to="/admin/admindashboard"
+          to="/admin/dashboard"
           className="flex items-center gap-3 px-4 py-3 rounded-lg
                      text-gray-300
                      hover:bg-blue-600
@@ -44,7 +44,7 @@ export default function AdminSidebar() {
         </Link>
 
         <Link
-          to="/admin/adminjobs"
+          to="/admin/jobs"
           className="flex items-center gap-3 px-4 py-3 rounded-lg
                      text-gray-300
                      hover:bg-blue-600
@@ -56,7 +56,7 @@ export default function AdminSidebar() {
         </Link>
 
         <Link
-          to="/admin/adminreports"
+          to="/admin/reports"
           className="flex items-center gap-3 px-4 py-3 rounded-lg
                      text-gray-300
                      hover:bg-blue-600
@@ -68,7 +68,7 @@ export default function AdminSidebar() {
         </Link>
 
         <Link
-          to="/admin/adminanalytics"
+          to="/admin/analytics"
           className="flex items-center gap-3 px-4 py-3 rounded-lg
                      text-gray-300
                      hover:bg-blue-600
