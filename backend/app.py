@@ -1,11 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
-
+from routes.resume_routes import resume_bp
 from routes.auth_routes import auth_bp
 from routes.admin_routes import admin_bp
 from routes.recruiter_routes import recruiter_bp
 from routes.candidate_routes import candidate_bp
-
 
 app = Flask(__name__)
 
@@ -14,6 +13,10 @@ CORS(app)
 
 # Authentication routes
 app.register_blueprint(auth_bp)
+
+
+# Resume routes
+app.register_blueprint(resume_bp)
 
 
 # Role-based routes

@@ -179,14 +179,54 @@ def login():
         if connection:
             connection.close()
 
-@auth_bp.route("/protected", methods=["GET"])
+@auth_bp.route("/profile", methods=["GET"])
 @token_required
-def protected():
+def profile():
 
-    return jsonify({
-        "message": "You accessed a protected route",
-        "user": request.user
-    }), 200
+    connection = None
+    cursor = None
+
+    try:
+
+        connection = get_db_connection()
+
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT id, name, email, role, status
+            FROM users
+            WHERE id = %s
+            """,
+            (request.user["user_id"],)
+        )
+
+        user = cursor.fetchone()
+
+        if not user:
+
+            return jsonify({
+                "message": "User not found"
+            }), 404
+
+        return jsonify({
+            "user": user
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({
+            "message": "Failed to fetch profile",
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
 
 @auth_bp.route("/admin-test", methods=["GET"])
 @token_required

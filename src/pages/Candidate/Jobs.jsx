@@ -1,80 +1,312 @@
+import { useEffect, useState } from "react";
+import API from "../../api/axios";
 import CandidateLayout from "../../layouts/CandidateLayout";
 
-import SearchBar from "../../components/SearchBar";
-import FilterPanel from "../../components/FilterPanel";
-import JobCard from "../../components/JobCard";
+import {
+  FaBriefcase,
+  FaMapMarkerAlt,
+  FaMoneyBillWave,
+  FaClock,
+  FaSearch,
+} from "react-icons/fa";
 
 export default function Jobs() {
+
+  const [jobs, setJobs] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
+
+
+  // =========================
+  // FETCH JOBS
+  // =========================
+
+  const fetchJobs = async () => {
+
+    try {
+
+      setLoading(true);
+
+      setError("");
+
+      const response = await API.get(
+        "/api/candidate/jobs"
+      );
+
+      setJobs(
+        response.data.jobs || []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Failed to fetch jobs:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+        "Failed to load jobs."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+
+  // =========================
+  // LOAD JOBS
+  // =========================
+
+  useEffect(() => {
+
+    fetchJobs();
+
+  }, []);
+
+
+  // =========================
+  // SEARCH JOBS
+  // =========================
+
+  const filteredJobs = jobs.filter((job) => {
+
+    const searchText =
+      search.toLowerCase();
+
+    return (
+
+      job.title
+        ?.toLowerCase()
+        .includes(searchText)
+
+      ||
+
+      job.required_skills
+        ?.toLowerCase()
+        .includes(searchText)
+
+      ||
+
+      job.location
+        ?.toLowerCase()
+        .includes(searchText)
+
+    );
+
+  });
+
+
   return (
+
     <CandidateLayout>
 
-      {/* Page Heading */}
+      {/* =========================
+          PAGE HEADING
+      ========================= */}
+
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">
-          Browse Jobs
+
+        <h1 className="text-3xl font-bold text-gray-800">
+          Find Jobs
         </h1>
 
         <p className="text-gray-500 mt-2">
-          Discover opportunities that match your skills.
+          Explore available jobs and find opportunities that match your skills.
         </p>
+
       </div>
 
-      {/* Search */}
-      <SearchBar />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-8">
+      {/* =========================
+          SEARCH
+      ========================= */}
 
-        {/* Filters */}
-        <div>
-          <FilterPanel />
-        </div>
+      <div className="bg-white rounded-xl shadow-md p-5 mb-8">
 
-        {/* Job Cards */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="flex items-center border rounded-lg px-4">
 
-          <JobCard
-            title="Data Scientist"
-            company="ABC Technologies"
-            location="Kathmandu"
-            salary="NPR 80,000/month"
-            type="Full Time"
-            skills={[
-              "Python",
-              "SQL",
-              "Machine Learning",
-            ]}
-          />
+          <FaSearch className="text-gray-400" />
 
-          <JobCard
-            title="AI Engineer"
-            company="XYZ Solutions"
-            location="Lalitpur"
-            salary="NPR 100,000/month"
-            type="Full Time"
-            skills={[
-              "Python",
-              "TensorFlow",
-              "Deep Learning",
-            ]}
-          />
-
-          <JobCard
-            title="Python Developer"
-            company="Tech Nepal"
-            location="Remote"
-            salary="NPR 70,000/month"
-            type="Internship"
-            skills={[
-              "Python",
-              "Django",
-              "REST API",
-            ]}
+          <input
+            type="text"
+            placeholder="Search by job title, skill or location..."
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            className="w-full p-3 outline-none"
           />
 
         </div>
 
       </div>
+
+
+      {/* =========================
+          ERROR
+      ========================= */}
+
+      {error && (
+
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 mb-6">
+
+          {error}
+
+        </div>
+
+      )}
+
+
+      {/* =========================
+          LOADING
+      ========================= */}
+
+      {loading ? (
+
+        <div className="bg-white rounded-xl shadow-md p-10 text-center">
+
+          <p className="text-gray-500">
+            Loading jobs...
+          </p>
+
+        </div>
+
+      ) : filteredJobs.length === 0 ? (
+
+        <div className="bg-white rounded-xl shadow-md p-10 text-center">
+
+          <FaBriefcase className="text-gray-300 text-5xl mx-auto mb-4" />
+
+          <h2 className="text-xl font-bold text-gray-700">
+            No Jobs Found
+          </h2>
+
+          <p className="text-gray-500 mt-2">
+            Try another search or check back later.
+          </p>
+
+        </div>
+
+      ) : (
+
+        /* =========================
+           JOB CARDS
+        ========================= */
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {filteredJobs.map((job) => (
+
+            <div
+              key={job.id}
+              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition"
+            >
+
+              {/* Job Header */}
+
+              <div className="flex justify-between items-start">
+
+                <div>
+
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {job.title}
+                  </h2>
+
+                  <span className="inline-block mt-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                    {job.status}
+                  </span>
+
+                </div>
+
+                <FaBriefcase className="text-blue-600 text-2xl" />
+
+              </div>
+
+
+              {/* Description */}
+
+              <p className="text-gray-600 mt-5">
+                {job.description}
+              </p>
+
+
+              {/* Job Details */}
+
+              <div className="space-y-3 mt-5">
+
+                <div className="flex items-center gap-3 text-gray-600">
+
+                  <FaBriefcase className="text-blue-500" />
+
+                  <span>
+                    {job.required_skills || "Skills not specified"}
+                  </span>
+
+                </div>
+
+
+                <div className="flex items-center gap-3 text-gray-600">
+
+                  <FaClock className="text-blue-500" />
+
+                  <span>
+                    {job.experience || "Experience not specified"}
+                  </span>
+
+                </div>
+
+
+                <div className="flex items-center gap-3 text-gray-600">
+
+                  <FaMapMarkerAlt className="text-blue-500" />
+
+                  <span>
+                    {job.location || "Location not specified"}
+                  </span>
+
+                </div>
+
+
+                <div className="flex items-center gap-3 text-gray-600">
+
+                  <FaMoneyBillWave className="text-green-600" />
+
+                  <span>
+                    {job.salary || "Salary not specified"}
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              {/* Apply Button */}
+
+              <button
+                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition"
+              >
+                View & Apply
+              </button>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      )}
 
     </CandidateLayout>
+
   );
+
 }
