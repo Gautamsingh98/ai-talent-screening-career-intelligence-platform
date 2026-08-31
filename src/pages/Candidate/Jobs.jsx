@@ -20,6 +20,8 @@ export default function Jobs() {
 
   const [search, setSearch] = useState("");
 
+  const [applyingJob, setApplyingJob] = useState(null);
+
 
   // =========================
   // FETCH JOBS
@@ -74,6 +76,51 @@ export default function Jobs() {
 
 
   // =========================
+  // APPLY FOR JOB
+  // =========================
+
+  const handleApply = async (jobId) => {
+
+    try {
+
+      setApplyingJob(jobId);
+
+      setError("");
+
+      const response = await API.post(
+        "/api/candidate/apply",
+        {
+          job_id: jobId
+        }
+      );
+
+      alert(
+        response.data.message ||
+        "Application submitted successfully"
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Application error:",
+        err
+      );
+
+      alert(
+        err.response?.data?.message ||
+        "Failed to apply for this job."
+      );
+
+    } finally {
+
+      setApplyingJob(null);
+
+    }
+
+  };
+
+
+  // =========================
   // SEARCH JOBS
   // =========================
 
@@ -105,6 +152,10 @@ export default function Jobs() {
   });
 
 
+  // =========================
+  // PAGE
+  // =========================
+
   return (
 
     <CandidateLayout>
@@ -120,7 +171,8 @@ export default function Jobs() {
         </h1>
 
         <p className="text-gray-500 mt-2">
-          Explore available jobs and find opportunities that match your skills.
+          Explore available jobs and find opportunities
+          that match your skills.
         </p>
 
       </div>
@@ -137,6 +189,8 @@ export default function Jobs() {
           <FaSearch className="text-gray-400" />
 
           <input
+            id="job-search"
+            name="job-search"
             type="text"
             placeholder="Search by job title, skill or location..."
             value={search}
@@ -211,7 +265,9 @@ export default function Jobs() {
               className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition"
             >
 
-              {/* Job Header */}
+              {/* =========================
+                  JOB HEADER
+              ========================= */}
 
               <div className="flex justify-between items-start">
 
@@ -232,14 +288,18 @@ export default function Jobs() {
               </div>
 
 
-              {/* Description */}
+              {/* =========================
+                  DESCRIPTION
+              ========================= */}
 
               <p className="text-gray-600 mt-5">
                 {job.description}
               </p>
 
 
-              {/* Job Details */}
+              {/* =========================
+                  JOB DETAILS
+              ========================= */}
 
               <div className="space-y-3 mt-5">
 
@@ -248,7 +308,8 @@ export default function Jobs() {
                   <FaBriefcase className="text-blue-500" />
 
                   <span>
-                    {job.required_skills || "Skills not specified"}
+                    {job.required_skills ||
+                      "Skills not specified"}
                   </span>
 
                 </div>
@@ -259,7 +320,8 @@ export default function Jobs() {
                   <FaClock className="text-blue-500" />
 
                   <span>
-                    {job.experience || "Experience not specified"}
+                    {job.experience ||
+                      "Experience not specified"}
                   </span>
 
                 </div>
@@ -270,7 +332,8 @@ export default function Jobs() {
                   <FaMapMarkerAlt className="text-blue-500" />
 
                   <span>
-                    {job.location || "Location not specified"}
+                    {job.location ||
+                      "Location not specified"}
                   </span>
 
                 </div>
@@ -281,7 +344,8 @@ export default function Jobs() {
                   <FaMoneyBillWave className="text-green-600" />
 
                   <span>
-                    {job.salary || "Salary not specified"}
+                    {job.salary ||
+                      "Salary not specified"}
                   </span>
 
                 </div>
@@ -289,12 +353,24 @@ export default function Jobs() {
               </div>
 
 
-              {/* Apply Button */}
+              {/* =========================
+                  APPLY BUTTON
+              ========================= */}
 
               <button
-                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition"
+                onClick={() =>
+                  handleApply(job.id)
+                }
+                disabled={
+                  applyingJob === job.id
+                }
+                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold transition"
               >
-                View & Apply
+
+                {applyingJob === job.id
+                  ? "Applying..."
+                  : "View & Apply"}
+
               </button>
 
             </div>
