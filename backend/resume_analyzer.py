@@ -96,7 +96,6 @@ def extract_education(text):
 
     return education[:10]
 
-
 # =========================
 # EXTRACT EXPERIENCE
 # =========================

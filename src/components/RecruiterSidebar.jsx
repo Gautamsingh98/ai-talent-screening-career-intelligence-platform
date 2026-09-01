@@ -6,10 +6,21 @@ import {
   FaFileAlt,
   FaSignOutAlt,
 } from "react-icons/fa";
-
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function RecruiterSidebar() {
+    // Navigation
+  const navigate = useNavigate(); 
+  // Logout function
+  const handleLogout = () => {
+  // Remove JWT token
+   localStorage.removeItem("token");
+  // Remove user information if stored
+  localStorage.removeItem("user");
+  // Redirect to login page 
+  navigate("/"); 
+}; 
+
   const menuItems = [
     {
       name: "Dashboard",
@@ -70,7 +81,8 @@ export default function RecruiterSidebar() {
 
       {/* Logout */}
       <div className="p-4 border-t border-slate-700">
-        <button className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-red-600 transition">
+        <button onClick={handleLogout}
+        className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-red-600 transition">
           <FaSignOutAlt />
           Logout
         </button>

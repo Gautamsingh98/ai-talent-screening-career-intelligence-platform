@@ -3,32 +3,22 @@ import API from "../../api/axios";
 import CandidateLayout from "../../layouts/CandidateLayout";
 
 import {
-  FaFileAlt,
+  FaFilePdf,
+  FaStar,
   FaGraduationCap,
   FaBriefcase,
-  FaTools,
   FaCheckCircle,
-  FaExclamationCircle,
+  FaExclamationTriangle,
+  FaLightbulb,
 } from "react-icons/fa";
 
 export default function ResumeAnalysis() {
 
-  // =========================
-  // STATES
-  // =========================
-
   const [analysis, setAnalysis] = useState(null);
-
   const [resume, setResume] = useState(null);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-
-  // =========================
-  // FETCH ANALYSIS
-  // =========================
 
   useEffect(() => {
 
@@ -37,38 +27,26 @@ export default function ResumeAnalysis() {
       try {
 
         setLoading(true);
-
         setError("");
-
 
         const response = await API.get(
           "/api/resume/analyze"
         );
 
-
-        setAnalysis(
-          response.data.analysis
-        );
-
-
-        setResume(
-          response.data.resume
-        );
-
+        setAnalysis(response.data.analysis);
+        setResume(response.data.resume);
 
       } catch (err) {
 
         console.error(
-          "Resume analysis error:",
+          "Failed to analyze resume:",
           err
         );
-
 
         setError(
           err.response?.data?.message ||
           "Failed to analyze resume."
         );
-
 
       } finally {
 
@@ -78,92 +56,52 @@ export default function ResumeAnalysis() {
 
     };
 
-
     fetchAnalysis();
 
   }, []);
 
 
-  // =========================
-  // LOADING
-  // =========================
-
   if (loading) {
 
     return (
-
       <CandidateLayout>
 
-        <div className="flex items-center justify-center min-h-[500px]">
+        <div className="bg-white rounded-xl shadow-md p-10 text-center">
 
-          <div className="text-center">
-
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4">
-            </div>
-
-            <p className="text-gray-600">
-              Analyzing your resume...
-            </p>
-
-          </div>
+          <p className="text-gray-500">
+            Analyzing your resume...
+          </p>
 
         </div>
 
       </CandidateLayout>
-
     );
 
   }
 
-
-  // =========================
-  // ERROR
-  // =========================
 
   if (error) {
 
     return (
-
       <CandidateLayout>
 
-        <div className="flex items-center justify-center min-h-[500px]">
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-5">
 
-          <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center max-w-md">
-
-            <FaExclamationCircle
-              className="text-red-500 text-4xl mx-auto mb-4"
-            />
-
-            <h2 className="text-xl font-bold text-red-700 mb-2">
-              Resume Analysis Failed
-            </h2>
-
-            <p className="text-red-600">
-              {error}
-            </p>
-
-          </div>
+          {error}
 
         </div>
 
       </CandidateLayout>
-
     );
 
   }
 
-
-  // =========================
-  // MAIN PAGE
-  // =========================
 
   return (
 
     <CandidateLayout>
 
-      {/* =========================
-          PAGE HEADING
-      ========================= */}
+      {/* PAGE HEADING */}
 
       <div className="mb-8">
 
@@ -172,32 +110,33 @@ export default function ResumeAnalysis() {
         </h1>
 
         <p className="text-gray-500 mt-2">
-          Analyze your resume and understand your professional strengths.
+          AI-powered analysis of your resume.
         </p>
 
       </div>
 
 
-      {/* =========================
-          RESUME INFORMATION
-      ========================= */}
+      {/* RESUME INFORMATION */}
 
       {resume && (
 
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
 
           <div className="flex items-center gap-4">
 
-            <FaFileAlt className="text-blue-600 text-4xl" />
+            <FaFilePdf className="text-red-600 text-4xl" />
 
             <div>
 
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="font-bold text-lg">
                 {resume.filename}
               </h2>
 
               <p className="text-gray-500 text-sm">
-                Uploaded Resume
+                Uploaded:{" "}
+                {new Date(
+                  resume.uploaded_at
+                ).toLocaleDateString()}
               </p>
 
             </div>
@@ -209,202 +148,250 @@ export default function ResumeAnalysis() {
       )}
 
 
-      {/* =========================
-          RESUME SCORE
-      ========================= */}
+      {analysis && (
 
-      <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+        <>
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          Resume Score
-        </h2>
+          {/* SCORE */}
+
+          <div className="bg-white rounded-xl shadow-md p-8 mb-6 text-center">
+
+            <FaStar className="text-yellow-500 text-5xl mx-auto mb-4" />
+
+            <h2 className="text-xl font-bold text-gray-700">
+              Resume Score
+            </h2>
+
+            <p className="text-5xl font-bold text-blue-600 mt-3">
+              {analysis.score}/100
+            </p>
+
+          </div>
 
 
-        <div className="flex flex-col items-center">
+          {/* SKILLS */}
 
-          <div className="w-40 h-40 rounded-full border-8 border-blue-600 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
 
-            <div className="text-center">
+            <h2 className="text-xl font-bold mb-5">
+              Technical Skills
+            </h2>
 
-              <p className="text-4xl font-bold text-blue-600">
-                {analysis?.score || 0}
-              </p>
+            <div className="flex flex-wrap gap-3">
 
-              <p className="text-gray-500">
-                / 100
-              </p>
+              {analysis.skills?.length > 0 ? (
+
+                analysis.skills.map(
+                  (skill, index) => (
+
+                    <span
+                      key={index}
+                      className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full"
+                    >
+                      {skill}
+                    </span>
+
+                  )
+                )
+
+              ) : (
+
+                <p className="text-gray-500">
+                  No technical skills detected.
+                </p>
+
+              )}
 
             </div>
 
           </div>
 
 
-          <p className="text-gray-600 mt-5">
+          {/* EDUCATION */}
 
-            {analysis?.score >= 80
-              ? "Excellent Resume"
-              : analysis?.score >= 60
-              ? "Good Resume"
-              : analysis?.score >= 40
-              ? "Needs Improvement"
-              : "Resume Needs Significant Improvement"}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
 
-          </p>
+            <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
 
-        </div>
+              <FaGraduationCap className="text-blue-600" />
 
-      </div>
+              Education
 
+            </h2>
 
-      {/* =========================
-          SKILLS
-      ========================= */}
+            <div className="space-y-3">
 
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              {analysis.education?.length > 0 ? (
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-3">
+                analysis.education.map(
+                  (education, index) => (
 
-          <FaTools className="text-blue-600" />
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4"
+                    >
+                      {education}
+                    </div>
 
-          Skills
+                  )
+                )
 
-        </h2>
+              ) : (
 
+                <p className="text-gray-500">
+                  No education information detected.
+                </p>
 
-        {analysis?.skills?.length > 0 ? (
+              )}
 
-          <div className="flex flex-wrap gap-3">
-
-            {analysis.skills.map(
-              (skill, index) => (
-
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-medium"
-                >
-
-                  {skill}
-
-                </span>
-
-              )
-            )}
+            </div>
 
           </div>
 
-        ) : (
 
-          <p className="text-gray-500">
-            No skills detected.
-          </p>
+          {/* EXPERIENCE */}
 
-        )}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
 
-      </div>
+            <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
 
+              <FaBriefcase className="text-blue-600" />
 
-      {/* =========================
-          EDUCATION
-      ========================= */}
+              Experience
 
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            </h2>
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-3">
+            <div className="space-y-3">
 
-          <FaGraduationCap className="text-green-600" />
+              {analysis.experience?.length > 0 ? (
 
-          Education
+                analysis.experience.map(
+                  (experience, index) => (
 
-        </h2>
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4"
+                    >
+                      {experience}
+                    </div>
 
+                  )
+                )
 
-        {analysis?.education?.length > 0 ? (
+              ) : (
 
-          <div className="space-y-3">
+                <p className="text-gray-500">
+                  No experience information detected.
+                </p>
 
-            {analysis.education.map(
-              (education, index) => (
+              )}
 
-                <div
-                  key={index}
-                  className="flex items-start gap-3 border rounded-lg p-4"
-                >
-
-                  <FaCheckCircle className="text-green-600 mt-1" />
-
-                  <p className="text-gray-700">
-                    {education}
-                  </p>
-
-                </div>
-
-              )
-            )}
+            </div>
 
           </div>
 
-        ) : (
 
-          <p className="text-gray-500">
-            No education information detected.
-          </p>
+          {/* STRENGTHS */}
 
-        )}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
 
-      </div>
+            <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
 
+              <FaCheckCircle className="text-green-600" />
 
-      {/* =========================
-          EXPERIENCE
-      ========================= */}
+              Strengths
 
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            </h2>
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-3">
+            <div className="space-y-3">
 
-          <FaBriefcase className="text-purple-600" />
+              {analysis.strengths?.map(
+                (strength, index) => (
 
-          Experience
+                  <div
+                    key={index}
+                    className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700"
+                  >
+                    {strength}
+                  </div>
 
-        </h2>
+                )
+              )}
 
-
-        {analysis?.experience?.length > 0 ? (
-
-          <div className="space-y-3">
-
-            {analysis.experience.map(
-              (experience, index) => (
-
-                <div
-                  key={index}
-                  className="flex items-start gap-3 border rounded-lg p-4"
-                >
-
-                  <FaCheckCircle className="text-purple-600 mt-1" />
-
-                  <p className="text-gray-700">
-                    {experience}
-                  </p>
-
-                </div>
-
-              )
-            )}
+            </div>
 
           </div>
 
-        ) : (
 
-          <p className="text-gray-500">
-            No experience information detected.
-          </p>
+          {/* WEAKNESSES */}
 
-        )}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
 
-      </div>
+            <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
+
+              <FaExclamationTriangle className="text-orange-500" />
+
+              Weaknesses
+
+            </h2>
+
+            <div className="space-y-3">
+
+              {analysis.weaknesses?.map(
+                (weakness, index) => (
+
+                  <div
+                    key={index}
+                    className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-orange-700"
+                  >
+                    {weakness}
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+
+          {/* RECOMMENDATIONS */}
+
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+
+            <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
+
+              <FaLightbulb className="text-yellow-500" />
+
+              Recommendations
+
+            </h2>
+
+            <div className="space-y-3">
+
+              {analysis.recommendations?.map(
+                (recommendation, index) => (
+
+                  <div
+                    key={index}
+                    className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700"
+                  >
+                    {recommendation}
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+        </>
+
+      )}
 
     </CandidateLayout>
 
   );
+
 }

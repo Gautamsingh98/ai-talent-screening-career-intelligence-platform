@@ -17,6 +17,7 @@ def candidate_dashboard():
         "user": request.user
     }), 200
 
+
 # =========================
 # GET ACTIVE JOBS
 # =========================
@@ -78,6 +79,7 @@ def get_jobs():
 
         if connection:
             connection.close()
+
 
 # =========================
 # APPLY FOR JOB
@@ -238,71 +240,6 @@ def apply_for_job():
         if connection:
             connection.close()
 
-# =========================
-# GET AVAILABLE JOBS
-# =========================
-
-@candidate_bp.route("/jobs", methods=["GET"])
-@token_required
-def get_available_jobs():
-
-    # =========================
-    # CHECK CANDIDATE ROLE
-    # =========================
-
-    if request.user["role"] != "Candidate":
-
-        return jsonify({
-            "message": "Only candidates can view jobs"
-        }), 403
-
-    connection = None
-    cursor = None
-
-    try:
-
-        connection = get_db_connection()
-
-        cursor = connection.cursor(dictionary=True)
-
-        cursor.execute(
-            """
-            SELECT
-                id,
-                title,
-                description,
-                required_skills,
-                experience,
-                location,
-                salary,
-                status,
-                created_at
-            FROM jobs
-            WHERE status = 'Active'
-            ORDER BY created_at DESC
-            """
-        )
-
-        jobs = cursor.fetchall()
-
-        return jsonify({
-            "jobs": jobs
-        }), 200
-
-    except Exception as e:
-
-        return jsonify({
-            "message": "Failed to fetch jobs",
-            "error": str(e)
-        }), 500
-
-    finally:
-
-        if cursor:
-            cursor.close()
-
-        if connection:
-            connection.close()
 
 # =========================
 # GET APPLIED JOBS
@@ -322,14 +259,17 @@ def get_applied_jobs():
             "message": "Only candidates can access applied jobs"
         }), 403
 
+
     connection = None
     cursor = None
+
 
     try:
 
         connection = get_db_connection()
 
         cursor = connection.cursor(dictionary=True)
+
 
         cursor.execute(
             """
@@ -358,11 +298,14 @@ def get_applied_jobs():
             (request.user["user_id"],)
         )
 
+
         applications = cursor.fetchall()
+
 
         return jsonify({
             "applications": applications
         }), 200
+
 
     except Exception as e:
 
@@ -371,10 +314,11 @@ def get_applied_jobs():
             "error": str(e)
         }), 500
 
+
     finally:
 
         if cursor:
             cursor.close()
 
         if connection:
-            connection.close() 
+            connection.close()

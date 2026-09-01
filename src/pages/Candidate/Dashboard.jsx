@@ -122,7 +122,7 @@ export default function Dashboard() {
 
         <h1 className="text-3xl font-bold">
 
-          Welcome, {user?.name || "Candidate"} 👋
+          Welcome, {user?.name || "Candidate"}
 
         </h1>
 
