@@ -423,6 +423,8 @@ def view_candidate_resume(application_id):
             """
             SELECT
                 applications.id AS application_id,
+                applications.status AS application_status,
+
                 users.id AS candidate_id,
                 users.name AS candidate_name,
                 users.email AS candidate_email,
@@ -447,6 +449,7 @@ def view_candidate_resume(application_id):
             AND jobs.recruiter_id = %s
 
             ORDER BY resumes.uploaded_at DESC
+
             LIMIT 1
             """,
             (
@@ -464,7 +467,11 @@ def view_candidate_resume(application_id):
             }), 404
 
         return jsonify({
+
+            "message": "Candidate resume fetched successfully",
+
             "resume": resume
+
         }), 200
 
     except Exception as e:
@@ -484,7 +491,6 @@ def view_candidate_resume(application_id):
 
         if connection:
             connection.close()
-
 
 # =========================================================
 # CANDIDATE RANKING

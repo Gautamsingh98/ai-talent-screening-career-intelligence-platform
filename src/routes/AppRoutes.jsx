@@ -24,6 +24,7 @@ import AdminReports from "../pages/Admin/Reports";
 import AdminAnalytics from "../pages/Admin/Analytics";
 import Settings from "../pages/Admin/Settings";
 import CandidateRanking from "../pages/Recruiter/CandidateRanking";
+import CandidateDetails from "../pages/Recruiter/CandidateDetails";
 
 export default function AppRoutes() {
   return (
@@ -53,6 +54,7 @@ export default function AppRoutes() {
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/settings" element={<Settings />} />
         <Route path="/recruiter/jobs/:jobId/ranking" element={<CandidateRanking />} />      
+        <Route path="/recruiter/candidates/:applicationId" element={<CandidateDetails />} />     
       </Routes>
     </BrowserRouter>
   );
