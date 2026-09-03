@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
+import os
 
 from database import get_db_connection
 from middleware.auth_middleware import token_required
@@ -394,7 +395,7 @@ def update_application_status(application_id):
 
 
 # =========================================================
-# VIEW CANDIDATE RESUME
+# VIEW CANDIDATE RESUME INFORMATION
 # =========================================================
 
 @recruiter_bp.route(
@@ -419,6 +420,10 @@ def view_candidate_resume(application_id):
 
         cursor = connection.cursor(dictionary=True)
 
+        # =====================================================
+        # GET CANDIDATE + JOB + RESUME INFORMATION
+        # =====================================================
+
         cursor.execute(
             """
             SELECT
@@ -429,9 +434,14 @@ def view_candidate_resume(application_id):
                 users.name AS candidate_name,
                 users.email AS candidate_email,
 
+                jobs.id AS job_id,
+                jobs.title AS job_title,
+                jobs.required_skills,
+
                 resumes.original_filename,
                 resumes.stored_filename,
                 resumes.file_path,
+                resumes.extracted_text,
                 resumes.uploaded_at
 
             FROM applications
@@ -466,9 +476,84 @@ def view_candidate_resume(application_id):
                 "message": "Application or resume not found"
             }), 404
 
+        # =====================================================
+        # EXTRACT SKILLS FROM RESUME
+        # =====================================================
+
+        extracted_text = resume["extracted_text"] or ""
+
+        skill_list = [
+            "Python",
+            "Java",
+            "JavaScript",
+            "React",
+            "Node.js",
+            "HTML",
+            "CSS",
+            "SQL",
+            "MySQL",
+            "MongoDB",
+            "Pandas",
+            "NumPy",
+            "Matplotlib",
+            "Scikit-learn",
+            "Machine Learning",
+            "Deep Learning",
+            "Artificial Intelligence",
+            "Data Science",
+            "Flask",
+            "Django",
+            "Git",
+            "GitHub",
+            "Docker",
+            "AWS"
+        ]
+
+        resume_skills = []
+
+        for skill in skill_list:
+
+            if skill.lower() in extracted_text.lower():
+
+                resume_skills.append(skill)
+
+        # =====================================================
+        # CALCULATE JOB MATCH
+        # =====================================================
+
+        match_result = calculate_job_match(
+            resume_skills,
+            resume["required_skills"]
+        )
+
+        # =====================================================
+        # ADD MATCH INFORMATION
+        # =====================================================
+
+        resume["match_percentage"] = (
+            match_result["match_percentage"]
+        )
+
+        resume["matched_skills"] = (
+            match_result["matched_skills"]
+        )
+
+        resume["missing_skills"] = (
+            match_result["missing_skills"]
+        )
+
+        # Remove extracted text from response
+        # because frontend does not need the full resume text
+        resume.pop("extracted_text", None)
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
         return jsonify({
 
-            "message": "Candidate resume fetched successfully",
+            "message":
+                "Candidate resume and match information fetched successfully",
 
             "resume": resume
 
@@ -478,7 +563,131 @@ def view_candidate_resume(application_id):
 
         return jsonify({
 
-            "message": "Failed to fetch candidate resume",
+            "message":
+                "Failed to fetch candidate resume",
+
+            "error":
+                str(e)
+
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+
+# =========================================================
+# VIEW / OPEN CANDIDATE RESUME FILE
+# =========================================================
+
+@recruiter_bp.route(
+    "/applicants/<int:application_id>/resume/file",
+    methods=["GET"]
+)
+@token_required
+def view_candidate_resume_file(application_id):
+
+    # Check recruiter role
+    if request.user["role"] != "Recruiter":
+
+        return jsonify({
+            "message": "Only recruiters can view candidate resumes"
+        }), 403
+
+    connection = None
+    cursor = None
+
+    try:
+
+        connection = get_db_connection()
+
+        cursor = connection.cursor(dictionary=True)
+
+        # -------------------------------------------------
+        # Get resume file path
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                resumes.file_path,
+                resumes.original_filename
+
+            FROM applications
+
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+
+            INNER JOIN resumes
+                ON resumes.user_id = applications.candidate_id
+
+            WHERE applications.id = %s
+            AND jobs.recruiter_id = %s
+
+            ORDER BY resumes.uploaded_at DESC
+
+            LIMIT 1
+            """,
+            (
+                application_id,
+                request.user["user_id"]
+            )
+        )
+
+        resume = cursor.fetchone()
+
+        # -------------------------------------------------
+        # Resume not found
+        # -------------------------------------------------
+
+        if not resume:
+
+            return jsonify({
+                "message": "Resume not found"
+            }), 404
+
+        file_path = resume["file_path"]
+
+        # -------------------------------------------------
+        # Check file path
+        # -------------------------------------------------
+
+        if not file_path:
+
+            return jsonify({
+                "message": "Resume file path is empty"
+            }), 404
+
+        # -------------------------------------------------
+        # Check whether file exists
+        # -------------------------------------------------
+
+        if not os.path.exists(file_path):
+
+            return jsonify({
+                "message": "Resume file does not exist",
+                "file_path": file_path
+            }), 404
+
+        # -------------------------------------------------
+        # Send resume to browser
+        # -------------------------------------------------
+
+        return send_file(
+            file_path,
+            as_attachment=False,
+            download_name=resume["original_filename"]
+        )
+
+    except Exception as e:
+
+        return jsonify({
+
+            "message": "Failed to open resume",
 
             "error": str(e)
 
@@ -491,6 +700,7 @@ def view_candidate_resume(application_id):
 
         if connection:
             connection.close()
+
 
 # =========================================================
 # CANDIDATE RANKING
@@ -518,7 +728,10 @@ def candidate_ranking(job_id):
 
         cursor = connection.cursor(dictionary=True)
 
+        # -------------------------------------------------
         # Get job
+        # -------------------------------------------------
+
         cursor.execute(
             """
             SELECT
@@ -543,7 +756,10 @@ def candidate_ranking(job_id):
                 "message": "Job not found or you do not own this job"
             }), 404
 
+        # -------------------------------------------------
         # Get applicants + resumes
+        # -------------------------------------------------
+
         cursor.execute(
             """
             SELECT
@@ -574,6 +790,10 @@ def candidate_ranking(job_id):
 
         rankings = []
 
+        # -------------------------------------------------
+        # Supported skills
+        # -------------------------------------------------
+
         skill_list = [
             "Python",
             "Java",
@@ -600,6 +820,10 @@ def candidate_ranking(job_id):
             "Docker",
             "AWS"
         ]
+
+        # -------------------------------------------------
+        # Calculate ranking
+        # -------------------------------------------------
 
         for applicant in applicants:
 
@@ -643,10 +867,18 @@ def candidate_ranking(job_id):
 
             })
 
+        # -------------------------------------------------
+        # Sort by match percentage
+        # -------------------------------------------------
+
         rankings.sort(
             key=lambda x: x["match_percentage"],
             reverse=True
         )
+
+        # -------------------------------------------------
+        # Assign rank
+        # -------------------------------------------------
 
         for index, candidate in enumerate(
             rankings,
@@ -654,6 +886,10 @@ def candidate_ranking(job_id):
         ):
 
             candidate["rank"] = index
+
+        # -------------------------------------------------
+        # Return ranking
+        # -------------------------------------------------
 
         return jsonify({
 
@@ -746,7 +982,10 @@ def update_job(job_id):
 
         cursor = connection.cursor(dictionary=True)
 
+        # -------------------------------------------------
         # Check job ownership
+        # -------------------------------------------------
+
         cursor.execute(
             """
             SELECT id
@@ -768,7 +1007,10 @@ def update_job(job_id):
                 "message": "Job not found"
             }), 404
 
+        # -------------------------------------------------
         # Update job
+        # -------------------------------------------------
+
         cursor.execute(
             """
             UPDATE jobs
@@ -850,7 +1092,10 @@ def delete_job(job_id):
 
         cursor = connection.cursor(dictionary=True)
 
+        # -------------------------------------------------
         # Check job ownership
+        # -------------------------------------------------
+
         cursor.execute(
             """
             SELECT id
@@ -872,7 +1117,10 @@ def delete_job(job_id):
                 "message": "Job not found"
             }), 404
 
+        # -------------------------------------------------
         # Delete job
+        # -------------------------------------------------
+
         cursor.execute(
             """
             DELETE FROM jobs

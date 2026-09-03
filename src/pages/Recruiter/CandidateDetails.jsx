@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import RecruiterLayout from "../../layouts/RecruiterLayout";
@@ -8,6 +8,7 @@ import {
   FaUser,
   FaEnvelope,
   FaFileAlt,
+  FaFilePdf,
   FaCheckCircle,
   FaTimesCircle,
   FaPercentage,
@@ -32,7 +33,7 @@ export default function CandidateDetails() {
   // FETCH CANDIDATE DETAILS
   // =========================
 
-  const fetchCandidate = async () => {
+  const fetchCandidate = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -54,8 +55,47 @@ export default function CandidateDetails() {
         err.response?.data?.message ||
           "Failed to load candidate details"
       );
-    } finally {
-      setLoading(false);
+      } finally {
+    setLoading(false);
+  }
+}, [applicationId]);
+
+  // =========================
+  // VIEW RESUME
+  // =========================
+
+  const handleViewResume = async () => {
+    try {
+      setError("");
+
+      const response = await API.get(
+        `/api/recruiter/applicants/${applicationId}/resume/file`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      // Create temporary URL for PDF
+      const fileURL = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: "application/pdf",
+        })
+      );
+
+      // Open PDF in a new browser tab
+      window.open(fileURL, "_blank");
+
+      // Clean up temporary URL
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 10000);
+    } catch (err) {
+      console.error("Resume viewing error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          "Unable to open resume."
+      );
     }
   };
 
@@ -106,9 +146,9 @@ export default function CandidateDetails() {
   // LOAD DATA
   // =========================
 
-  useEffect(() => {
-    fetchCandidate();
-  }, [applicationId]);
+useEffect(() => {
+  fetchCandidate();
+}, [fetchCandidate]);
 
   // =========================
   // STATUS COLOR
@@ -358,21 +398,48 @@ export default function CandidateDetails() {
 
           <div className="bg-white rounded-xl shadow-md p-6">
 
-            <div className="flex items-center gap-3 mb-3">
+  <div className="flex items-center justify-between mb-3">
 
-              <FaPercentage className="text-blue-600 text-xl" />
+    <div className="flex items-center gap-3">
 
-              <h3 className="font-semibold text-gray-700">
-                Match Percentage
-              </h3>
+      <FaPercentage className="text-blue-600 text-xl" />
 
-            </div>
+      <h3 className="font-semibold text-gray-700">
+        Match Percentage
+      </h3>
 
-            <p className="text-3xl font-bold text-blue-600">
-              {candidate.match_percentage ?? "N/A"}%
-            </p>
+    </div>
 
-          </div>
+    <span className="text-2xl font-bold text-blue-600">
+      {candidate.match_percentage ?? 0}%
+    </span>
+
+  </div>
+
+  {/* Progress Bar */}
+
+  <div className="w-full bg-gray-200 rounded-full h-3">
+
+    <div
+      className="bg-blue-600 h-3 rounded-full transition-all duration-700"
+      style={{
+        width: `${Math.min(
+          Math.max(
+            Number(candidate.match_percentage) || 0,
+            0
+          ),
+          100
+        )}%`,
+      }}
+    ></div>
+
+  </div>
+
+  <p className="text-sm text-gray-500 mt-2">
+    Resume match with job requirements
+  </p>
+
+</div>
 
           {/* MATCHED SKILLS */}
 
@@ -468,13 +535,16 @@ export default function CandidateDetails() {
 
           {candidate.original_filename ? (
 
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+              {/* Resume Information */}
 
               <div className="flex items-center gap-3 bg-gray-50 border rounded-lg px-4 py-3">
 
-                <FaFileAlt className="text-purple-600" />
+                <FaFilePdf className="text-red-600 text-2xl" />
 
                 <div>
+
                   <p className="font-semibold text-gray-700">
                     {candidate.original_filename}
                   </p>
@@ -487,16 +557,20 @@ export default function CandidateDetails() {
                       ).toLocaleDateString()}
                     </p>
                   )}
+
                 </div>
 
               </div>
 
-              {/* 
-                Your current backend returns resume information,
-                but does not provide a dedicated download/view route.
-                So we display the filename here instead of creating
-                a broken URL.
-              */}
+              {/* View Resume Button */}
+
+              <button
+                onClick={handleViewResume}
+                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-semibold transition"
+              >
+                <FaFilePdf />
+                View Resume
+              </button>
 
             </div>
 
