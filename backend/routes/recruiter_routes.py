@@ -19,11 +19,221 @@ recruiter_bp = Blueprint("recruiter", __name__)
 @role_required("Recruiter")
 def recruiter_dashboard():
 
-    return jsonify({
-        "message": "Recruiter dashboard data",
-        "user": request.user
-    }), 200
+    connection = None
+    cursor = None
 
+    try:
+        # Connect to database
+        connection = get_db_connection()
+
+        cursor = connection.cursor(dictionary=True)
+
+        recruiter_id = request.user["user_id"]
+
+        # =====================================================
+        # JOBS POSTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_jobs
+            FROM jobs
+            WHERE recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        jobs_result = cursor.fetchone()
+
+        jobs_posted = jobs_result["total_jobs"] or 0
+
+        # =====================================================
+        # TOTAL APPLICANTS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_applicants
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        applicants_result = cursor.fetchone()
+
+        applicants = applicants_result["total_applicants"] or 0
+
+        # =====================================================
+        # SHORTLISTED CANDIDATES
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_shortlisted
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Shortlisted'
+            """,
+            (recruiter_id,)
+        )
+
+        shortlisted_result = cursor.fetchone()
+
+        shortlisted = shortlisted_result["total_shortlisted"] or 0
+
+        # =====================================================
+        # HIRED CANDIDATES
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_hired
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Hired'
+            """,
+            (recruiter_id,)
+        )
+
+        hired_result = cursor.fetchone()
+
+        hired = hired_result["total_hired"] or 0
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
+        return jsonify({
+
+            "message": "Recruiter dashboard data fetched successfully",
+
+            "jobs_posted": jobs_posted,
+
+            "applicants": applicants,
+
+            "shortlisted": shortlisted,
+
+            "hired": hired
+
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({
+            "message": "Failed to fetch recruiter dashboard data",
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+
+# =========================================================
+# RECRUITER DASHBOARD CHART DATA
+# =========================================================
+
+@recruiter_bp.route("/dashboard/charts", methods=["GET"])
+@token_required
+@role_required("Recruiter")
+def recruiter_dashboard_charts():
+
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        recruiter_id = request.user["user_id"]
+
+        # =====================================================
+        # APPLICATIONS TREND - LAST 6 MONTHS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                DATE_FORMAT(applications.applied_at, '%b') AS month,
+                COUNT(*) AS applications
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.applied_at >= DATE_SUB(
+                CURDATE(),
+                INTERVAL 6 MONTH
+            )
+            GROUP BY
+                YEAR(applications.applied_at),
+                MONTH(applications.applied_at),
+                DATE_FORMAT(applications.applied_at, '%b')
+            ORDER BY
+                YEAR(applications.applied_at),
+                MONTH(applications.applied_at)
+            """,
+            (recruiter_id,)
+        )
+
+        application_data = cursor.fetchall()
+
+        # =====================================================
+        # HIRING SUCCESS - HIRED CANDIDATES BY JOB
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                jobs.title AS role,
+                COUNT(applications.id) AS hired
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Hired'
+            GROUP BY jobs.id, jobs.title
+            ORDER BY hired DESC
+            """,
+            (recruiter_id,)
+        )
+
+        hiring_data = cursor.fetchall()
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
+        return jsonify({
+            "message": "Recruiter dashboard chart data fetched successfully",
+            "application_data": application_data,
+            "hiring_data": hiring_data
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({
+            "message": "Failed to fetch recruiter dashboard chart data",
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
 
 # =========================================================
 # CREATE JOB
@@ -151,23 +361,42 @@ def get_recruiter_jobs():
         cursor = connection.cursor(dictionary=True)
 
         cursor.execute(
-            """
-            SELECT
-                id,
-                title,
-                description,
-                required_skills,
-                experience,
-                location,
-                salary,
-                status,
-                created_at
-            FROM jobs
-            WHERE recruiter_id = %s
-            ORDER BY created_at DESC
-            """,
-            (request.user["user_id"],)
-        )
+    """
+    SELECT
+        jobs.id,
+        jobs.title,
+        jobs.description,
+        jobs.required_skills,
+        jobs.experience,
+        jobs.location,
+        jobs.salary,
+        jobs.status,
+        jobs.created_at,
+
+        COUNT(applications.id) AS applications
+
+    FROM jobs
+
+    LEFT JOIN applications
+        ON applications.job_id = jobs.id
+
+    WHERE jobs.recruiter_id = %s
+
+    GROUP BY
+        jobs.id,
+        jobs.title,
+        jobs.description,
+        jobs.required_skills,
+        jobs.experience,
+        jobs.location,
+        jobs.salary,
+        jobs.status,
+        jobs.created_at
+
+    ORDER BY jobs.created_at DESC
+    """,
+    (request.user["user_id"],)
+)
 
         jobs = cursor.fetchall()
 

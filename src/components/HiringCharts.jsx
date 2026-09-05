@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -10,71 +12,179 @@ import {
   Tooltip,
 } from "recharts";
 
-const applicationData = [
-  { month: "Jan", applications: 25 },
-  { month: "Feb", applications: 40 },
-  { month: "Mar", applications: 55 },
-  { month: "Apr", applications: 70 },
-  { month: "May", applications: 90 },
-  { month: "Jun", applications: 120 },
-];
-
-const hiringData = [
-  { role: "Python", hired: 8 },
-  { role: "Data Sci", hired: 5 },
-  { role: "AI Eng", hired: 3 },
-  { role: "Web Dev", hired: 6 },
-];
+import API from "../api/axios";
 
 export default function HiringCharts() {
+
+  const [applicationData, setApplicationData] = useState([]);
+  const [hiringData, setHiringData] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+
+    const fetchChartData = async () => {
+
+      try {
+
+        setLoading(true);
+        setError("");
+
+        const response = await API.get(
+          "/api/recruiter/dashboard/charts"
+        );
+
+        setApplicationData(
+          response.data.application_data || []
+        );
+
+        setHiringData(
+          response.data.hiring_data || []
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Dashboard chart data error:",
+          error
+        );
+
+        setError(
+          error.response?.data?.message ||
+          "Failed to load chart data."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+    fetchChartData();
+
+  }, []);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      {/* Applications Trend */}
+      {/* =====================================================
+          APPLICATIONS TREND
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
         <h2 className="text-xl font-bold mb-6">
           Applications Trend
         </h2>
 
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={applicationData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
+        {loading ? (
 
-            <Line
-              type="monotone"
-              dataKey="applications"
-              stroke="#2563eb"
-              strokeWidth={3}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+          <div className="h-[300px] flex items-center justify-center text-gray-500">
+            Loading chart...
+          </div>
+
+        ) : error ? (
+
+          <div className="h-[300px] flex items-center justify-center text-red-500">
+            {error}
+          </div>
+
+        ) : applicationData.length === 0 ? (
+
+          <div className="h-[300px] flex items-center justify-center text-gray-500">
+            No application data available.
+          </div>
+
+        ) : (
+
+          <ResponsiveContainer width="100%" height={300}>
+
+            <LineChart data={applicationData}>
+
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis dataKey="month" />
+
+              <YAxis allowDecimals={false} />
+
+              <Tooltip />
+
+              <Line
+                type="monotone"
+                dataKey="applications"
+                stroke="#2563eb"
+                strokeWidth={3}
+                activeDot={{ r: 6 }}
+              />
+
+            </LineChart>
+
+          </ResponsiveContainer>
+
+        )}
 
       </div>
 
-      {/* Hiring Success */}
+
+      {/* =====================================================
+          HIRING SUCCESS
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
         <h2 className="text-xl font-bold mb-6">
           Hiring Success
         </h2>
 
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={hiringData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="role" />
-            <YAxis />
-            <Tooltip />
+        {loading ? (
 
-            <Bar
-              dataKey="hired"
-              fill="#16a34a"
-            />
-          </BarChart>
-        </ResponsiveContainer>
+          <div className="h-[300px] flex items-center justify-center text-gray-500">
+            Loading chart...
+          </div>
+
+        ) : error ? (
+
+          <div className="h-[300px] flex items-center justify-center text-red-500">
+            {error}
+          </div>
+
+        ) : hiringData.length === 0 ? (
+
+          <div className="h-[300px] flex items-center justify-center text-gray-500">
+            No hired candidates yet.
+          </div>
+
+        ) : (
+
+          <ResponsiveContainer width="100%" height={300}>
+
+            <BarChart data={hiringData}>
+
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="role"
+                tick={{ fontSize: 12 }}
+              />
+
+              <YAxis allowDecimals={false} />
+
+              <Tooltip />
+
+              <Bar
+                dataKey="hired"
+                fill="#16a34a"
+                radius={[6, 6, 0, 0]}
+              />
+
+            </BarChart>
+
+          </ResponsiveContainer>
+
+        )}
 
       </div>
 

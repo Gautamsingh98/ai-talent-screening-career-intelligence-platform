@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import API from "../../api/axios";
 import RecruiterLayout from "../../layouts/RecruiterLayout";
 
@@ -7,9 +7,14 @@ import {
   FaBriefcase,
   FaEnvelope,
   FaCalendarAlt,
+  FaSearch,
+  FaFilter,
 } from "react-icons/fa";
 
 export default function Applicants() {
+  // =========================
+  // STATES
+  // =========================
 
   const [applicants, setApplicants] = useState([]);
 
@@ -19,17 +24,18 @@ export default function Applicants() {
 
   const [updatingId, setUpdatingId] = useState(null);
 
+  // Search and filters
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [jobFilter, setJobFilter] = useState("All");
 
   // =========================
   // FETCH APPLICANTS
   // =========================
 
-  const fetchApplicants = async () => {
-
+  const fetchApplicants = useCallback(async () => {
     try {
-
       setLoading(true);
-
       setError("");
 
       const response = await API.get(
@@ -41,7 +47,6 @@ export default function Applicants() {
       );
 
     } catch (err) {
-
       console.error(
         "Failed to fetch applicants:",
         err
@@ -49,28 +54,21 @@ export default function Applicants() {
 
       setError(
         err.response?.data?.message ||
-        "Failed to load applicants."
+          "Failed to load applicants."
       );
 
     } finally {
-
       setLoading(false);
-
     }
-
-  };
-
+  }, []);
 
   // =========================
   // LOAD APPLICANTS
   // =========================
 
   useEffect(() => {
-
     fetchApplicants();
-
-  }, []);
-
+  }, [fetchApplicants]);
 
   // =========================
   // UPDATE APPLICATION STATUS
@@ -80,11 +78,8 @@ export default function Applicants() {
     applicationId,
     newStatus
   ) => {
-
     try {
-
       setUpdatingId(applicationId);
-
       setError("");
 
       const response = await API.put(
@@ -93,7 +88,6 @@ export default function Applicants() {
           status: newStatus,
         }
       );
-
 
       // Update status immediately
       setApplicants((currentApplicants) =>
@@ -107,14 +101,12 @@ export default function Applicants() {
         )
       );
 
-
       alert(
         response.data.message ||
-        "Application status updated successfully"
+          "Application status updated successfully"
       );
 
     } catch (err) {
-
       console.error(
         "Failed to update status:",
         err
@@ -122,26 +114,20 @@ export default function Applicants() {
 
       alert(
         err.response?.data?.message ||
-        "Failed to update application status."
+          "Failed to update application status."
       );
 
     } finally {
-
       setUpdatingId(null);
-
     }
-
   };
-
 
   // =========================
   // STATUS STYLE
   // =========================
 
   const getStatusStyle = (status) => {
-
     switch (status) {
-
       case "Applied":
         return "bg-blue-100 text-blue-700";
 
@@ -159,14 +145,81 @@ export default function Applicants() {
 
       default:
         return "bg-gray-100 text-gray-700";
-
     }
-
   };
 
+  // =========================
+  // FILTER APPLICANTS
+  // =========================
+
+  const filteredApplicants = applicants.filter(
+    (applicant) => {
+      const searchText = search
+        .trim()
+        .toLowerCase();
+
+      const candidateName =
+        applicant.candidate_name
+          ?.toLowerCase() || "";
+
+      const candidateEmail =
+        applicant.candidate_email
+          ?.toLowerCase() || "";
+
+      // Search by candidate name or email
+      const matchesSearch =
+        candidateName.includes(searchText) ||
+        candidateEmail.includes(searchText);
+
+      // Filter by status
+      const matchesStatus =
+        statusFilter === "All" ||
+        applicant.status === statusFilter;
+
+      // Filter by job
+      const matchesJob =
+        jobFilter === "All" ||
+        String(applicant.job_id) ===
+          String(jobFilter);
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesJob
+      );
+    }
+  );
+
+  // =========================
+  // UNIQUE JOBS
+  // =========================
+
+  const uniqueJobs = [
+    ...new Map(
+      applicants
+        .filter((applicant) => applicant.job_id)
+        .map((applicant) => [
+          applicant.job_id,
+          applicant.job_title,
+        ])
+    ),
+  ];
+
+  // =========================
+  // RESET FILTERS
+  // =========================
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("All");
+    setJobFilter("All");
+  };
+
+  // =========================
+  // PAGE
+  // =========================
 
   return (
-
     <RecruiterLayout>
 
       {/* =========================
@@ -186,7 +239,6 @@ export default function Applicants() {
 
       </div>
 
-
       {/* =========================
           ERROR
       ========================= */}
@@ -194,13 +246,10 @@ export default function Applicants() {
       {error && (
 
         <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 mb-6">
-
           {error}
-
         </div>
 
       )}
-
 
       {/* =========================
           LOADING
@@ -241,208 +290,387 @@ export default function Applicants() {
 
       ) : (
 
-        /* =========================
-           APPLICANTS TABLE
-        ========================= */
+        <>
 
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          {/* =========================
+              SEARCH & FILTERS
+          ========================= */}
 
-          <div className="overflow-x-auto">
+          <div className="bg-white rounded-xl shadow-md p-5 mb-6">
 
-            <table className="w-full">
+            <div className="flex items-center gap-2 mb-4">
 
-              <thead className="bg-gray-50">
+              <FaFilter className="text-blue-600" />
 
-                <tr>
+              <h2 className="font-semibold text-gray-800">
+                Search & Filters
+              </h2>
 
-                  <th className="text-left px-6 py-4 font-semibold text-gray-700">
-                    Candidate
-                  </th>
+            </div>
 
-                  <th className="text-left px-6 py-4 font-semibold text-gray-700">
-                    Email
-                  </th>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                  <th className="text-left px-6 py-4 font-semibold text-gray-700">
-                    Job
-                  </th>
+              {/* SEARCH */}
 
-                  <th className="text-left px-6 py-4 font-semibold text-gray-700">
-                    Applied Date
-                  </th>
+              <div className="relative">
 
-                  <th className="text-left px-6 py-4 font-semibold text-gray-700">
-                    Status
-                  </th>
+                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
 
-                </tr>
+                <input
+                  type="text"
+                  placeholder="Search candidate..."
+                  value={search}
+                  onChange={(e) =>
+                    setSearch(e.target.value)
+                  }
+                  className="w-full border border-gray-300 rounded-lg pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                />
 
-              </thead>
+              </div>
 
+              {/* STATUS FILTER */}
 
-              <tbody>
+              <select
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+              >
 
-                {applicants.map((applicant) => (
+                <option value="All">
+                  All Statuses
+                </option>
 
-                  <tr
-                    key={applicant.id}
-                    className="border-t hover:bg-gray-50"
-                  >
+                <option value="Applied">
+                  Applied
+                </option>
 
-                    {/* =========================
-                        CANDIDATE
-                    ========================= */}
+                <option value="Shortlisted">
+                  Shortlisted
+                </option>
 
-                    <td className="px-6 py-4">
+                <option value="Interview">
+                  Interview
+                </option>
 
-                      <div className="flex items-center gap-3">
+                <option value="Hired">
+                  Hired
+                </option>
 
-                        <div className="bg-blue-100 p-3 rounded-full">
+                <option value="Rejected">
+                  Rejected
+                </option>
 
-                          <FaUser className="text-blue-600" />
+              </select>
 
-                        </div>
+              {/* JOB FILTER */}
 
-                        <span className="font-semibold text-gray-800">
+              <select
+                value={jobFilter}
+                onChange={(e) =>
+                  setJobFilter(e.target.value)
+                }
+                className="border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+              >
 
-                          {applicant.candidate_name}
+                <option value="All">
+                  All Jobs
+                </option>
 
-                        </span>
+                {uniqueJobs.map(
+                  ([jobId, jobTitle]) => (
 
-                      </div>
+                    <option
+                      key={jobId}
+                      value={jobId}
+                    >
+                      {jobTitle}
+                    </option>
 
-                    </td>
+                  )
+                )}
 
+              </select>
 
-                    {/* =========================
-                        EMAIL
-                    ========================= */}
+            </div>
 
-                    <td className="px-6 py-4">
+            {/* FILTER RESULTS */}
 
-                      <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-5">
 
-                        <FaEnvelope />
+              <p className="text-sm text-gray-500">
 
-                        {applicant.candidate_email}
+                Showing{" "}
 
-                      </div>
+                <span className="font-semibold text-gray-800">
+                  {filteredApplicants.length}
+                </span>
 
-                    </td>
+                {" "}of{" "}
 
+                <span className="font-semibold text-gray-800">
+                  {applicants.length}
+                </span>
 
-                    {/* =========================
-                        JOB
-                    ========================= */}
+                {" "}applicants
 
-                    <td className="px-6 py-4">
+              </p>
 
-                      <div className="flex items-center gap-2 text-gray-600">
+              {/* RESET */}
 
-                        <FaBriefcase />
+              {(search ||
+                statusFilter !== "All" ||
+                jobFilter !== "All") && (
 
-                        {applicant.job_title}
+                <button
+                  onClick={handleResetFilters}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Reset Filters
+                </button>
 
-                      </div>
+              )}
 
-                    </td>
-
-
-                    {/* =========================
-                        APPLIED DATE
-                    ========================= */}
-
-                    <td className="px-6 py-4">
-
-                      <div className="flex items-center gap-2 text-gray-600">
-
-                        <FaCalendarAlt />
-
-                        {new Date(
-                          applicant.applied_at
-                        ).toLocaleDateString()}
-
-                      </div>
-
-                    </td>
-
-
-                    {/* =========================
-                        STATUS
-                    ========================= */}
-
-                    <td className="px-6 py-4">
-
-                      <div className="flex items-center gap-3">
-
-                        <select
-                          id={`status-${applicant.id}`}
-                          name={`status-${applicant.id}`}
-                          value={applicant.status}
-                          disabled={
-                            updatingId === applicant.id
-                          }
-                          onChange={(e) =>
-                            handleStatusChange(
-                              applicant.id,
-                              e.target.value
-                            )
-                          }
-                          className={`border rounded-lg px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-blue-500 ${getStatusStyle(
-                            applicant.status
-                          )}`}
-                        >
-
-                          <option value="Applied">
-                            Applied
-                          </option>
-
-                          <option value="Shortlisted">
-                            Shortlisted
-                          </option>
-
-                          <option value="Interview">
-                            Interview
-                          </option>
-
-                          <option value="Rejected">
-                            Rejected
-                          </option>
-
-                          <option value="Hired">
-                            Hired
-                          </option>
-
-                        </select>
-
-                        {updatingId === applicant.id && (
-
-                          <span className="text-sm text-gray-500">
-                            Updating...
-                          </span>
-
-                        )}
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
+            </div>
 
           </div>
 
-        </div>
+          {/* =========================
+              NO FILTER RESULTS
+          ========================= */}
+
+          {filteredApplicants.length === 0 ? (
+
+            <div className="bg-white rounded-xl shadow-md p-10 text-center">
+
+              <FaSearch
+                className="text-gray-300 text-5xl mx-auto mb-4"
+              />
+
+              <h2 className="text-xl font-bold text-gray-700">
+                No Matching Applicants
+              </h2>
+
+              <p className="text-gray-500 mt-2">
+                No applicants match your current
+                search or filters.
+              </p>
+
+              <button
+                onClick={handleResetFilters}
+                className="mt-5 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+              >
+                Reset Filters
+              </button>
+
+            </div>
+
+          ) : (
+
+            /* =========================
+               APPLICANTS TABLE
+            ========================= */
+
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+
+              <div className="overflow-x-auto">
+
+                <table className="w-full">
+
+                  <thead className="bg-gray-50">
+
+                    <tr>
+
+                      <th className="text-left px-6 py-4 font-semibold text-gray-700">
+                        Candidate
+                      </th>
+
+                      <th className="text-left px-6 py-4 font-semibold text-gray-700">
+                        Email
+                      </th>
+
+                      <th className="text-left px-6 py-4 font-semibold text-gray-700">
+                        Job
+                      </th>
+
+                      <th className="text-left px-6 py-4 font-semibold text-gray-700">
+                        Applied Date
+                      </th>
+
+                      <th className="text-left px-6 py-4 font-semibold text-gray-700">
+                        Status
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {filteredApplicants.map(
+                      (applicant) => (
+
+                        <tr
+                          key={applicant.id}
+                          className="border-t hover:bg-gray-50"
+                        >
+
+                          {/* =========================
+                              CANDIDATE
+                          ========================= */}
+
+                          <td className="px-6 py-4">
+
+                            <div className="flex items-center gap-3">
+
+                              <div className="bg-blue-100 p-3 rounded-full">
+
+                                <FaUser className="text-blue-600" />
+
+                              </div>
+
+                              <span className="font-semibold text-gray-800">
+
+                                {applicant.candidate_name}
+
+                              </span>
+
+                            </div>
+
+                          </td>
+
+                          {/* =========================
+                              EMAIL
+                          ========================= */}
+
+                          <td className="px-6 py-4">
+
+                            <div className="flex items-center gap-2 text-gray-600">
+
+                              <FaEnvelope />
+
+                              {applicant.candidate_email}
+
+                            </div>
+
+                          </td>
+
+                          {/* =========================
+                              JOB
+                          ========================= */}
+
+                          <td className="px-6 py-4">
+
+                            <div className="flex items-center gap-2 text-gray-600">
+
+                              <FaBriefcase />
+
+                              {applicant.job_title}
+
+                            </div>
+
+                          </td>
+
+                          {/* =========================
+                              APPLIED DATE
+                          ========================= */}
+
+                          <td className="px-6 py-4">
+
+                            <div className="flex items-center gap-2 text-gray-600">
+
+                              <FaCalendarAlt />
+
+                              {new Date(
+                                applicant.applied_at
+                              ).toLocaleDateString()}
+
+                            </div>
+
+                          </td>
+
+                          {/* =========================
+                              STATUS
+                          ========================= */}
+
+                          <td className="px-6 py-4">
+
+                            <div className="flex items-center gap-3">
+
+                              <select
+                                id={`status-${applicant.id}`}
+                                name={`status-${applicant.id}`}
+                                value={applicant.status}
+                                disabled={
+                                  updatingId ===
+                                  applicant.id
+                                }
+                                onChange={(e) =>
+                                  handleStatusChange(
+                                    applicant.id,
+                                    e.target.value
+                                  )
+                                }
+                                className={`border rounded-lg px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-blue-500 ${getStatusStyle(
+                                  applicant.status
+                                )}`}
+                              >
+
+                                <option value="Applied">
+                                  Applied
+                                </option>
+
+                                <option value="Shortlisted">
+                                  Shortlisted
+                                </option>
+
+                                <option value="Interview">
+                                  Interview
+                                </option>
+
+                                <option value="Rejected">
+                                  Rejected
+                                </option>
+
+                                <option value="Hired">
+                                  Hired
+                                </option>
+
+                              </select>
+
+                              {updatingId ===
+                                applicant.id && (
+
+                                <span className="text-sm text-gray-500">
+                                  Updating...
+                                </span>
+
+                              )}
+
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            </div>
+
+          )}
+
+        </>
 
       )}
 
     </RecruiterLayout>
-
   );
-
 }
