@@ -140,6 +140,8 @@ def recruiter_dashboard():
             connection.close()
 
 
+
+
 # =========================================================
 # RECRUITER DASHBOARD CHART DATA
 # =========================================================
@@ -226,6 +228,146 @@ def recruiter_dashboard_charts():
             "message": "Failed to fetch recruiter dashboard chart data",
             "error": str(e)
         }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+# =========================================================
+# RECRUITER REPORT CHART DATA
+# =========================================================
+
+@recruiter_bp.route("/reports/charts", methods=["GET"])
+@token_required
+@role_required("Recruiter")
+def recruiter_report_charts():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        # =====================================================
+        # CONNECT TO DATABASE
+        # =====================================================
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        recruiter_id = request.user["user_id"]
+
+        # =====================================================
+        # 1. HIRING TREND
+        # =====================================================
+        # Count hired applications by month.
+        #
+        # We use applied_at because your applications table
+        # already uses this field in the existing routes.
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                DATE_FORMAT(applications.applied_at, '%b') AS month,
+                COUNT(*) AS hired
+
+            FROM applications
+
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+
+            WHERE jobs.recruiter_id = %s
+
+            AND applications.status = 'Hired'
+
+            AND applications.applied_at >= DATE_SUB(
+                CURDATE(),
+                INTERVAL 6 MONTH
+            )
+
+            GROUP BY
+                YEAR(applications.applied_at),
+                MONTH(applications.applied_at),
+                DATE_FORMAT(applications.applied_at, '%b')
+
+            ORDER BY
+                YEAR(applications.applied_at),
+                MONTH(applications.applied_at)
+            """,
+            (recruiter_id,)
+        )
+
+        hiring_trend = cursor.fetchall()
+
+        # =====================================================
+        # 2. APPLICATIONS BY JOB ROLE
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                jobs.title AS role,
+                COUNT(applications.id) AS applications
+
+            FROM applications
+
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+
+            WHERE jobs.recruiter_id = %s
+
+            GROUP BY
+                jobs.id,
+                jobs.title
+
+            ORDER BY
+                applications DESC
+            """,
+            (recruiter_id,)
+        )
+
+        applications_by_role = cursor.fetchall()
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
+        return jsonify({
+
+            "message":
+                "Recruiter report chart data fetched successfully",
+
+            "hiring_trend":
+                hiring_trend,
+
+            "applications_by_role":
+                applications_by_role
+
+        }), 200
+
+    # =========================================================
+    # ERROR
+    # =========================================================
+
+    except Exception as e:
+
+        return jsonify({
+
+            "message":
+                "Failed to fetch recruiter report chart data",
+
+            "error":
+                str(e)
+
+        }), 500
+
+    # =========================================================
+    # CLOSE DATABASE
+    # =========================================================
 
     finally:
 

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -9,25 +11,77 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-const hiringTrend = [
-  { month: "Jan", hired: 2 },
-  { month: "Feb", hired: 4 },
-  { month: "Mar", hired: 6 },
-  { month: "Apr", hired: 5 },
-  { month: "May", hired: 8 },
-  { month: "Jun", hired: 10 },
-];
 
-const applicationsByRole = [
-  { role: "Python", applications: 35 },
-  { role: "Data Science", applications: 48 },
-  { role: "AI", applications: 28 },
-  { role: "ML", applications: 20 },
-];
+import API from "../api/axios";
 
 export default function RecruiterReportCharts() {
+  const [hiringTrend, setHiringTrend] = useState([]);
+  const [applicationsByRole, setApplicationsByRole] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchReportCharts = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await API.get("/api/recruiter/reports/charts");
+
+        setHiringTrend(response.data.hiring_trend || []);
+        setApplicationsByRole(
+          response.data.applications_by_role || []
+        );
+
+      } catch (err) {
+        console.error("Recruiter report chart error:", err);
+
+        setError(
+          err.response?.data?.message ||
+          "Failed to load report charts."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportCharts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <div className="bg-white rounded-xl shadow-md p-6 h-80 flex items-center justify-center">
+          <p className="text-gray-500">
+            Loading hiring trend...
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md p-6 h-80 flex items-center justify-center">
+          <p className="text-gray-500">
+            Loading application statistics...
+          </p>
+        </div>
+
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <p className="text-red-500">
+          {error}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
       {/* Hiring Trend */}
       <div className="bg-white rounded-xl shadow-md p-6">
 
@@ -35,66 +89,82 @@ export default function RecruiterReportCharts() {
           Hiring Trend
         </h2>
 
-        <div className="h-72">
+        {hiringTrend.length === 0 ? (
+          <div className="h-72 flex items-center justify-center">
+            <p className="text-gray-500">
+              No hiring data available yet.
+            </p>
+          </div>
+        ) : (
+          <div className="h-72">
 
-  <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%">
 
-    <LineChart data={hiringTrend}>
+              <LineChart data={hiringTrend}>
 
-      <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" />
 
-      <XAxis dataKey="month" />
+                <XAxis dataKey="month" />
 
-      <YAxis />
+                <YAxis allowDecimals={false} />
 
-      <Tooltip />
+                <Tooltip />
 
-      <Line
-        type="monotone"
-        dataKey="hired"
-        stroke="#2563EB"
-        strokeWidth={3}
-      />
+                <Line
+                  type="monotone"
+                  dataKey="hired"
+                  stroke="#2563EB"
+                  strokeWidth={3}
+                />
 
-    </LineChart>
+              </LineChart>
 
-  </ResponsiveContainer>
+            </ResponsiveContainer>
 
-</div>
+          </div>
+        )}
 
       </div>
 
-      {/* Applications by Role */}
+      {/* Applications By Role */}
       <div className="bg-white rounded-xl shadow-md p-6">
 
         <h2 className="text-xl font-bold mb-4">
           Applications by Job Role
         </h2>
 
-        <div className="h-72">
+        {applicationsByRole.length === 0 ? (
+          <div className="h-72 flex items-center justify-center">
+            <p className="text-gray-500">
+              No application data available yet.
+            </p>
+          </div>
+        ) : (
+          <div className="h-72">
 
-  <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%">
 
-    <BarChart data={applicationsByRole}>
+              <BarChart data={applicationsByRole}>
 
-      <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" />
 
-      <XAxis dataKey="role" />
+                <XAxis dataKey="role" />
 
-      <YAxis />
+                <YAxis allowDecimals={false} />
 
-      <Tooltip />
+                <Tooltip />
 
-      <Bar
-        dataKey="applications"
-        fill="#16A34A"
-      />
+                <Bar
+                  dataKey="applications"
+                  fill="#16A34A"
+                />
 
-    </BarChart>
+              </BarChart>
 
-  </ResponsiveContainer>
+            </ResponsiveContainer>
 
-</div>
+          </div>
+        )}
 
       </div>
 
