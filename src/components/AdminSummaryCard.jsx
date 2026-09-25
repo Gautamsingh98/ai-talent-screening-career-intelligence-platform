@@ -1,74 +1,128 @@
 import {
   FaUsers,
-  FaUserGraduate,
   FaUserTie,
+  FaUserGraduate,
+  FaBriefcase,
+  FaFileAlt,
   FaUserCheck,
 } from "react-icons/fa";
 
-export default function AdminSummaryCards() {
+export default function AdminSummaryCard({
+
+  totalUsers = 0,
+
+  totalCandidates = 0,
+
+  totalRecruiters = 0,
+
+  totalJobs = 0,
+
+  totalApplications = 0,
+
+  totalHired = 0,
+
+}) {
+
   const cards = [
+
     {
       title: "Total Users",
-      value: "520",
-      icon: <FaUsers />,
+      value: totalUsers,
+      icon: FaUsers,
       bg: "bg-blue-100",
-      color: "text-blue-600",
+      iconColor: "text-blue-600",
     },
+
     {
       title: "Candidates",
-      value: "420",
-      icon: <FaUserGraduate />,
+      value: totalCandidates,
+      icon: FaUserGraduate,
       bg: "bg-green-100",
-      color: "text-green-600",
+      iconColor: "text-green-600",
     },
+
     {
       title: "Recruiters",
-      value: "100",
-      icon: <FaUserTie />,
+      value: totalRecruiters,
+      icon: FaUserTie,
       bg: "bg-purple-100",
-      color: "text-purple-600",
+      iconColor: "text-purple-600",
     },
+
     {
-      title: "Active Users",
-      value: "495",
-      icon: <FaUserCheck />,
-      bg: "bg-yellow-100",
-      color: "text-yellow-600",
+      title: "Jobs Posted",
+      value: totalJobs,
+      icon: FaBriefcase,
+      bg: "bg-orange-100",
+      iconColor: "text-orange-600",
     },
+
+    {
+      title: "Applications",
+      value: totalApplications,
+      icon: FaFileAlt,
+      bg: "bg-cyan-100",
+      iconColor: "text-cyan-600",
+    },
+
+    {
+      title: "Hired",
+      value: totalHired,
+      icon: FaUserCheck,
+      bg: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+    },
+
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-      {cards.map((card, index) => (
-        <div
-          key={index}
-          className="bg-white rounded-xl shadow-md p-6 flex items-center justify-between"
-        >
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
 
-          {/* Text */}
-          <div>
+      {cards.map((card) => {
 
-            <p className="text-gray-500 text-sm">
-              {card.title}
-            </p>
+        const Icon = card.icon;
 
-            <h2 className="text-3xl font-bold text-gray-800 mt-2">
-              {card.value}
-            </h2>
+        return (
 
-          </div>
-
-          {/* Icon */}
           <div
-            className={`${card.bg} ${card.color} p-4 rounded-full text-2xl`}
+            key={card.title}
+            className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition duration-300"
           >
-            {card.icon}
+
+            <div className="flex items-center justify-between">
+
+              <div>
+
+                <p className="text-sm text-gray-500 font-medium">
+                  {card.title}
+                </p>
+
+                <h2 className="text-2xl font-bold text-gray-800 mt-2">
+                  {card.value}
+                </h2>
+
+              </div>
+
+              <div
+                className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center`}
+              >
+
+                <Icon
+                  className={`text-xl ${card.iconColor}`}
+                />
+
+              </div>
+
+            </div>
+
           </div>
 
-        </div>
-      ))}
+        );
+
+      })}
 
     </div>
+
   );
 }

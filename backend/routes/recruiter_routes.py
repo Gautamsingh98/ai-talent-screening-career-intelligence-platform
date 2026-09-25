@@ -1,5 +1,12 @@
 from flask import Blueprint, jsonify, request, send_file
 import os
+import io
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.enums import TA_CENTER
 
 from database import get_db_connection
 from middleware.auth_middleware import token_required
@@ -8,7 +15,6 @@ from job_matcher import calculate_job_match
 
 
 recruiter_bp = Blueprint("recruiter", __name__)
-
 
 # =========================================================
 # RECRUITER DASHBOARD
@@ -139,9 +145,6 @@ def recruiter_dashboard():
         if connection:
             connection.close()
 
-
-
-
 # =========================================================
 # RECRUITER DASHBOARD CHART DATA
 # =========================================================
@@ -227,6 +230,191 @@ def recruiter_dashboard_charts():
         return jsonify({
             "message": "Failed to fetch recruiter dashboard chart data",
             "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+# =========================================================
+# RECRUITER REPORT SUMMARY DATA
+# =========================================================
+
+@recruiter_bp.route("/reports", methods=["GET"])
+@token_required
+@role_required("Recruiter")
+def recruiter_report_summary():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        # =====================================================
+        # CONNECT DATABASE
+        # =====================================================
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # =====================================================
+        # GET LOGGED-IN RECRUITER ID
+        # =====================================================
+
+        recruiter_id = request.user["user_id"]
+
+        print("========================================")
+        print("RECRUITER REPORT REQUEST")
+        print("Logged-in recruiter ID:", recruiter_id)
+        print("Logged-in user:", request.user)
+        print("========================================")
+
+        # =====================================================
+        # 1. JOBS POSTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_jobs
+            FROM jobs
+            WHERE recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        jobs_result = cursor.fetchone()
+
+        total_jobs = jobs_result["total_jobs"] or 0
+
+        # =====================================================
+        # 2. TOTAL APPLICATIONS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_applications
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        applications_result = cursor.fetchone()
+
+        total_applications = (
+            applications_result["total_applications"] or 0
+        )
+
+        # =====================================================
+        # 3. SHORTLISTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS shortlisted
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Shortlisted'
+            """,
+            (recruiter_id,)
+        )
+
+        shortlisted_result = cursor.fetchone()
+
+        shortlisted = (
+            shortlisted_result["shortlisted"] or 0
+        )
+
+        # =====================================================
+        # 4. HIRED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS hired
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Hired'
+            """,
+            (recruiter_id,)
+        )
+
+        hired_result = cursor.fetchone()
+
+        hired = hired_result["hired"] or 0
+
+        # =====================================================
+        # 5. SUCCESS RATE
+        # =====================================================
+
+        success_rate = 0
+
+        if total_applications > 0:
+
+            success_rate = round(
+                (hired / total_applications) * 100,
+                2
+            )
+
+        # =====================================================
+        # DEBUG OUTPUT
+        # =====================================================
+
+        print("Total Jobs:", total_jobs)
+        print("Total Applications:", total_applications)
+        print("Shortlisted:", shortlisted)
+        print("Hired:", hired)
+        print("Success Rate:", success_rate)
+        print("========================================")
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
+        return jsonify({
+
+            "message":
+                "Recruiter report summary fetched successfully",
+
+            "total_jobs":
+                total_jobs,
+
+            "total_applications":
+                total_applications,
+
+            "shortlisted":
+                shortlisted,
+
+            "hired":
+                hired,
+
+            "success_rate":
+                success_rate
+
+        }), 200
+
+    except Exception as e:
+
+        print("RECRUITER REPORT ERROR:", str(e))
+
+        return jsonify({
+
+            "message":
+                "Failed to fetch recruiter report summary",
+
+            "error":
+                str(e)
+
         }), 500
 
     finally:
@@ -359,6 +547,762 @@ def recruiter_report_charts():
 
             "message":
                 "Failed to fetch recruiter report chart data",
+
+            "error":
+                str(e)
+
+        }), 500
+
+    # =========================================================
+    # CLOSE DATABASE
+    # =========================================================
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+# =========================================================
+# DOWNLOAD RECRUITER RECRUITMENT REPORT
+# =========================================================
+
+@recruiter_bp.route("/reports/download", methods=["GET"])
+@token_required
+@role_required("Recruiter")
+def download_recruiter_report():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        # =====================================================
+        # CONNECT TO DATABASE
+        # =====================================================
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        recruiter_id = request.user["user_id"]
+
+        # =====================================================
+        # 1. JOBS POSTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_jobs
+            FROM jobs
+            WHERE recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        jobs_result = cursor.fetchone()
+        total_jobs = jobs_result["total_jobs"] or 0
+
+        # =====================================================
+        # 2. TOTAL APPLICATIONS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_applications
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        applications_result = cursor.fetchone()
+
+        total_applications = (
+            applications_result["total_applications"] or 0
+        )
+
+        # =====================================================
+        # 3. SHORTLISTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS shortlisted
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Shortlisted'
+            """,
+            (recruiter_id,)
+        )
+
+        shortlisted_result = cursor.fetchone()
+
+        shortlisted = (
+            shortlisted_result["shortlisted"] or 0
+        )
+
+        # =====================================================
+        # 4. HIRED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS hired
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Hired'
+            """,
+            (recruiter_id,)
+        )
+
+        hired_result = cursor.fetchone()
+
+        hired = hired_result["hired"] or 0
+
+        # =====================================================
+        # 5. SUCCESS RATE
+        # =====================================================
+
+        success_rate = 0
+
+        if total_applications > 0:
+
+            success_rate = round(
+                (hired / total_applications) * 100,
+                2
+            )
+
+        # =====================================================
+        # 6. APPLICATIONS BY JOB ROLE
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                jobs.title AS role,
+                COUNT(applications.id) AS applications
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            GROUP BY jobs.id, jobs.title
+            ORDER BY applications DESC
+            """,
+            (recruiter_id,)
+        )
+
+        applications_by_role = cursor.fetchall()
+
+        # =====================================================
+        # CREATE PDF
+        # =====================================================
+
+        pdf_buffer = BytesIO()
+
+        document = SimpleDocTemplate(
+            pdf_buffer,
+            pagesize=A4,
+            rightMargin=40,
+            leftMargin=40,
+            topMargin=40,
+            bottomMargin=40
+        )
+
+        styles = getSampleStyleSheet()
+
+        title_style = styles["Title"]
+        title_style.alignment = TA_CENTER
+
+        normal_style = styles["Normal"]
+
+        content = []
+
+        # =====================================================
+        # TITLE
+        # =====================================================
+
+        content.append(
+            Paragraph(
+                "Recruiter Recruitment Report",
+                title_style
+            )
+        )
+
+        content.append(Spacer(1, 20))
+
+        content.append(
+            Paragraph(
+                "AI Talent Screening & Career Intelligence Platform",
+                normal_style
+            )
+        )
+
+        content.append(Spacer(1, 20))
+
+        # =====================================================
+        # SUMMARY
+        # =====================================================
+
+        summary_data = [
+            ["Metric", "Value"],
+            ["Jobs Posted", str(total_jobs)],
+            ["Applications", str(total_applications)],
+            ["Shortlisted", str(shortlisted)],
+            ["Hired", str(hired)],
+            ["Success Rate", f"{success_rate}%"]
+        ]
+
+        summary_table = Table(
+            summary_data,
+            colWidths=[250, 150]
+        )
+
+        summary_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ALIGN", (1, 1), (1, -1), "CENTER"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ])
+        )
+
+        content.append(
+            Paragraph(
+                "Recruitment Summary",
+                styles["Heading2"]
+            )
+        )
+
+        content.append(Spacer(1, 10))
+
+        content.append(summary_table)
+
+        content.append(Spacer(1, 25))
+
+        # =====================================================
+        # APPLICATIONS BY JOB ROLE
+        # =====================================================
+
+        content.append(
+            Paragraph(
+                "Applications by Job Role",
+                styles["Heading2"]
+            )
+        )
+
+        content.append(Spacer(1, 10))
+
+        role_data = [
+            ["Job Role", "Applications"]
+        ]
+
+        for row in applications_by_role:
+
+            role_data.append([
+                row["role"],
+                str(row["applications"])
+            ])
+
+        if len(role_data) == 1:
+
+            role_data.append([
+                "No applications",
+                "0"
+            ])
+
+        role_table = Table(
+            role_data,
+            colWidths=[250, 150]
+        )
+
+        role_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ALIGN", (1, 1), (1, -1), "CENTER"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ])
+        )
+
+        content.append(role_table)
+
+        content.append(Spacer(1, 25))
+
+        # =====================================================
+        # FOOTER INFORMATION
+        # =====================================================
+
+        content.append(
+            Paragraph(
+                "Generated by AI Talent Screening & Career Intelligence Platform",
+                normal_style
+            )
+        )
+
+        # =====================================================
+        # BUILD PDF
+        # =====================================================
+
+        document.build(content)
+
+        pdf_buffer.seek(0)
+
+        # =====================================================
+        # SEND PDF TO FRONTEND
+        # =====================================================
+
+        return send_file(
+            pdf_buffer,
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name="Recruiter_Recruitment_Report.pdf"
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "message": "Failed to generate recruiter recruitment report",
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+# =========================================================
+# RECRUITER ANALYTICS
+# =========================================================
+
+@recruiter_bp.route("/analytics", methods=["GET"])
+@token_required
+@role_required("Recruiter")
+def recruiter_analytics():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        # =====================================================
+        # CONNECT DATABASE
+        # =====================================================
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        recruiter_id = request.user["user_id"]
+
+        # =====================================================
+        # 1. TOTAL JOBS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total_jobs
+            FROM jobs
+            WHERE recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        jobs_result = cursor.fetchone()
+
+        total_jobs = jobs_result["total_jobs"] or 0
+
+        # =====================================================
+        # 2. TOTAL APPLICATIONS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_applications
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            """,
+            (recruiter_id,)
+        )
+
+        applications_result = cursor.fetchone()
+
+        total_applications = (
+            applications_result["total_applications"] or 0
+        )
+
+        # =====================================================
+        # 3. TOTAL HIRED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_hired
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Hired'
+            """,
+            (recruiter_id,)
+        )
+
+        hired_result = cursor.fetchone()
+
+        total_hired = (
+            hired_result["total_hired"] or 0
+        )
+
+        # =====================================================
+        # 4. TOTAL SHORTLISTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_shortlisted
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Shortlisted'
+            """,
+            (recruiter_id,)
+        )
+
+        shortlisted_result = cursor.fetchone()
+
+        total_shortlisted = (
+            shortlisted_result["total_shortlisted"] or 0
+        )
+
+        # =====================================================
+        # 5. TOTAL INTERVIEWS
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_interviews
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Interview'
+            """,
+            (recruiter_id,)
+        )
+
+        interview_result = cursor.fetchone()
+
+        total_interviews = (
+            interview_result["total_interviews"] or 0
+        )
+
+        # =====================================================
+        # 6. TOTAL REJECTED
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(applications.id) AS total_rejected
+            FROM applications
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+            WHERE jobs.recruiter_id = %s
+            AND applications.status = 'Rejected'
+            """,
+            (recruiter_id,)
+        )
+
+        rejected_result = cursor.fetchone()
+
+        total_rejected = (
+            rejected_result["total_rejected"] or 0
+        )
+
+        # =====================================================
+        # 7. HIRING RATE
+        # =====================================================
+
+        hiring_rate = 0
+
+        if total_applications > 0:
+
+            hiring_rate = round(
+                (total_hired / total_applications) * 100,
+                2
+            )
+
+        # =====================================================
+        # 8. APPLICATION STATUS DISTRIBUTION
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                applications.status,
+                COUNT(applications.id) AS total
+
+            FROM applications
+
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+
+            WHERE jobs.recruiter_id = %s
+
+            GROUP BY applications.status
+            """,
+            (recruiter_id,)
+        )
+
+        status_distribution = cursor.fetchall()
+
+        # =====================================================
+        # 9. APPLICATIONS BY JOB
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                jobs.id AS job_id,
+                jobs.title AS job_title,
+                COUNT(applications.id) AS applications
+
+            FROM jobs
+
+            LEFT JOIN applications
+                ON applications.job_id = jobs.id
+
+            WHERE jobs.recruiter_id = %s
+
+            GROUP BY
+                jobs.id,
+                jobs.title
+
+            ORDER BY applications DESC
+            """,
+            (recruiter_id,)
+        )
+
+        applications_by_job = cursor.fetchall()
+
+        # =====================================================
+        # 10. HIRED CANDIDATES BY JOB
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+                jobs.id AS job_id,
+                jobs.title AS job_title,
+
+                COUNT(applications.id) AS hired
+
+            FROM jobs
+
+            LEFT JOIN applications
+                ON applications.job_id = jobs.id
+                AND applications.status = 'Hired'
+
+            WHERE jobs.recruiter_id = %s
+
+            GROUP BY
+                jobs.id,
+                jobs.title
+
+            ORDER BY hired DESC
+            """,
+            (recruiter_id,)
+        )
+
+        hired_by_job = cursor.fetchall()
+
+        # =====================================================
+        # 11. RECRUITMENT FUNNEL
+        # =====================================================
+
+        recruitment_funnel = [
+
+            {
+                "stage": "Applied",
+                "count": total_applications
+            },
+
+            {
+                "stage": "Shortlisted",
+                "count": total_shortlisted
+            },
+
+            {
+                "stage": "Interview",
+                "count": total_interviews
+            },
+
+            {
+                "stage": "Hired",
+                "count": total_hired
+            }
+
+        ]
+
+        # =====================================================
+        # 12. MONTHLY RECRUITMENT PERFORMANCE
+        # =====================================================
+
+        cursor.execute(
+            """
+            SELECT
+
+                DATE_FORMAT(
+                    applications.applied_at,
+                    '%b'
+                ) AS month,
+
+                YEAR(applications.applied_at) AS year,
+
+                MONTH(applications.applied_at) AS month_number,
+
+                COUNT(applications.id) AS applications,
+
+                SUM(
+                    CASE
+                        WHEN applications.status = 'Interview'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS interviews,
+
+                SUM(
+                    CASE
+                        WHEN applications.status = 'Hired'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS hired
+
+            FROM applications
+
+            INNER JOIN jobs
+                ON applications.job_id = jobs.id
+
+            WHERE jobs.recruiter_id = %s
+
+            AND applications.applied_at >= DATE_SUB(
+                CURDATE(),
+                INTERVAL 6 MONTH
+            )
+
+            GROUP BY
+                YEAR(applications.applied_at),
+                MONTH(applications.applied_at),
+                DATE_FORMAT(
+                    applications.applied_at,
+                    '%b'
+                )
+
+            ORDER BY
+                YEAR(applications.applied_at),
+                MONTH(applications.applied_at)
+            """,
+            (recruiter_id,)
+        )
+
+        monthly_data = cursor.fetchall()
+
+        # =====================================================
+        # CALCULATE MONTHLY SUCCESS RATE
+        # =====================================================
+
+        for row in monthly_data:
+
+            applications = row["applications"] or 0
+            hired = row["hired"] or 0
+
+            if applications > 0:
+
+                row["success_rate"] = round(
+                    (hired / applications) * 100,
+                    2
+                )
+
+            else:
+
+                row["success_rate"] = 0
+
+        # =====================================================
+        # RESPONSE
+        # =====================================================
+
+        return jsonify({
+
+            "message":
+                "Recruiter analytics fetched successfully",
+
+            "overview": {
+
+                "total_jobs":
+                    total_jobs,
+
+                "total_applications":
+                    total_applications,
+
+                "total_shortlisted":
+                    total_shortlisted,
+
+                "total_interviews":
+                    total_interviews,
+
+                "total_hired":
+                    total_hired,
+
+                "total_rejected":
+                    total_rejected,
+
+                "hiring_rate":
+                    hiring_rate
+            },
+
+            "status_distribution":
+                status_distribution,
+
+            "applications_by_job":
+                applications_by_job,
+
+            "hired_by_job":
+                hired_by_job,
+
+            "recruitment_funnel":
+                recruitment_funnel,
+
+            "monthly_data":
+                monthly_data
+
+        }), 200
+
+    # =========================================================
+    # ERROR
+    # =========================================================
+
+    except Exception as e:
+
+        return jsonify({
+
+            "message":
+                "Failed to fetch recruiter analytics",
 
             "error":
                 str(e)

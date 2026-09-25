@@ -1,202 +1,395 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   FaUserPlus,
   FaBriefcase,
   FaFileAlt,
   FaCheckCircle,
+  FaUsers,
 } from "react-icons/fa";
 
 export default function AdminRecentActivity() {
-  const [filter, setFilter] = useState("all");
 
-  const activities = [
+  const [activities, setActivities] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // =====================================================
+  // FETCH ADMIN ACTIVITIES
+  // =====================================================
+
+  useEffect(() => {
+
+    const fetchActivities = async () => {
+
+      try {
+
+        setLoading(true);
+        setError("");
+
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+          "http://localhost:5000/api/admin/activity",
+          {
+            method: "GET",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch activities");
+        }
+
+        const data = await response.json();
+
+        setActivities(data.activities || []);
+
+      } catch (error) {
+
+        console.error("Activity error:", error);
+
+        setError("Unable to load recent activity.");
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+    fetchActivities();
+
+  }, []);
+
+  // =====================================================
+  // FILTER ACTIVITIES
+  // =====================================================
+
+  const filteredActivities =
+    activeFilter === "all"
+      ? activities
+      : activities.filter(
+          (activity) => activity.type === activeFilter
+        );
+
+  // =====================================================
+  // ICON
+  // =====================================================
+
+  const getIcon = (type) => {
+
+    switch (type) {
+
+      case "user":
+        return <FaUserPlus />;
+
+      case "job":
+        return <FaBriefcase />;
+
+      case "application":
+        return <FaFileAlt />;
+
+      case "hire":
+        return <FaCheckCircle />;
+
+      default:
+        return <FaUsers />;
+
+    }
+  };
+
+  // =====================================================
+  // ICON BACKGROUND
+  // =====================================================
+
+  const getIconStyle = (type) => {
+
+    switch (type) {
+
+      case "user":
+        return "bg-blue-100 text-blue-600";
+
+      case "job":
+        return "bg-purple-100 text-purple-600";
+
+      case "application":
+        return "bg-yellow-100 text-yellow-600";
+
+      case "hire":
+        return "bg-green-100 text-green-600";
+
+      default:
+        return "bg-gray-100 text-gray-600";
+
+    }
+  };
+
+  // =====================================================
+  // TIME FORMAT
+  // =====================================================
+
+  const formatTime = (date) => {
+
+    if (!date) {
+      return "";
+    }
+
+    const activityDate = new Date(date);
+    const now = new Date();
+
+    const difference =
+      Math.floor(
+        (now - activityDate) / 1000
+      );
+
+    if (difference < 60) {
+      return "Just now";
+    }
+
+    if (difference < 3600) {
+
+      const minutes =
+        Math.floor(difference / 60);
+
+      return `${minutes} ${
+        minutes === 1 ? "minute" : "minutes"
+      } ago`;
+    }
+
+    if (difference < 86400) {
+
+      const hours =
+        Math.floor(difference / 3600);
+
+      return `${hours} ${
+        hours === 1 ? "hour" : "hours"
+      } ago`;
+    }
+
+    const days =
+      Math.floor(difference / 86400);
+
+    return `${days} ${
+      days === 1 ? "day" : "days"
+    } ago`;
+  };
+
+  // =====================================================
+  // FILTER BUTTONS
+  // =====================================================
+
+  const filters = [
     {
-      type: "user",
-      title: "New Candidate Registered",
-      description: "Aarav Sharma created a candidate account.",
-      time: "10 minutes ago",
-      icon: <FaUserPlus />,
-      bg: "bg-blue-100",
-      color: "text-blue-600",
+      key: "all",
+      label: "All",
     },
     {
-      type: "job",
-      title: "New Job Posted",
-      description: "Tech Solutions posted a Data Scientist position.",
-      time: "25 minutes ago",
-      icon: <FaBriefcase />,
-      bg: "bg-purple-100",
-      color: "text-purple-600",
+      key: "user",
+      label: "Users",
     },
     {
-      type: "application",
-      title: "New Application",
-      description: "A candidate applied for Python Developer.",
-      time: "45 minutes ago",
-      icon: <FaFileAlt />,
-      bg: "bg-yellow-100",
-      color: "text-yellow-600",
+      key: "job",
+      label: "Jobs",
     },
     {
-      type: "hire",
-      title: "Candidate Hired",
-      description: "Rohan Gupta was hired for AI Engineer.",
-      time: "1 hour ago",
-      icon: <FaCheckCircle />,
-      bg: "bg-green-100",
-      color: "text-green-600",
+      key: "application",
+      label: "Applications",
     },
     {
-      type: "user",
-      title: "New Recruiter Registered",
-      description: "AI Innovations joined the platform.",
-      time: "2 hours ago",
-      icon: <FaUserPlus />,
-      bg: "bg-blue-100",
-      color: "text-blue-600",
+      key: "hire",
+      label: "Hires",
     },
   ];
 
-  const filteredActivities =
-    filter === "all"
-      ? activities
-      : activities.filter((activity) => activity.type === filter);
-
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-6">
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-8">
+
+      {/* ================================================= */}
+      {/* HEADER */}
+      {/* ================================================= */}
+
+      <div className="flex items-center justify-between mb-6">
 
         <div>
+
           <h2 className="text-xl font-bold text-gray-800">
             Recent Platform Activity
           </h2>
 
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-gray-500 text-sm mt-1">
             Latest activity across the platform
           </p>
+
         </div>
 
         <button
-          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-          onClick={() => alert("All activity will be available here.")}
+          onClick={() => setActiveFilter("all")}
+          className="text-blue-600 hover:text-blue-700 font-medium text-sm"
         >
           View All
         </button>
 
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* ================================================= */}
+      {/* FILTERS */}
+      {/* ================================================= */}
 
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            filter === "all"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          All
-        </button>
+      <div className="flex flex-wrap gap-3 mb-5">
 
-        <button
-          onClick={() => setFilter("user")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            filter === "user"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          Users
-        </button>
+        {filters.map((filter) => (
 
-        <button
-          onClick={() => setFilter("job")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            filter === "job"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          Jobs
-        </button>
+          <button
+            key={filter.key}
+            onClick={() =>
+              setActiveFilter(filter.key)
+            }
+            className={`
+              px-5 py-2 rounded-lg text-sm font-medium
+              transition
+              ${
+                activeFilter === filter.key
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }
+            `}
+          >
+            {filter.label}
+          </button>
 
-        <button
-          onClick={() => setFilter("application")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            filter === "application"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          Applications
-        </button>
-
-        <button
-          onClick={() => setFilter("hire")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            filter === "hire"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          Hires
-        </button>
+        ))}
 
       </div>
 
-      {/* Activities */}
-      <div className="space-y-5">
+      {/* ================================================= */}
+      {/* LOADING */}
+      {/* ================================================= */}
 
-        {filteredActivities.length > 0 ? (
-          filteredActivities.map((activity, index) => (
+      {loading && (
 
-            <div
-              key={index}
-              className="flex items-start gap-4 border-b last:border-b-0 pb-5 last:pb-0"
-            >
+        <div className="py-10 text-center text-gray-500">
 
-              {/* Icon */}
-              <div
-                className={`${activity.bg} ${activity.color} w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0`}
-              >
-                {activity.icon}
-              </div>
+          Loading recent activity...
 
-              {/* Content */}
-              <div className="flex-1">
+        </div>
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+      )}
 
-                  <h3 className="font-semibold text-gray-800">
-                    {activity.title}
-                  </h3>
+      {/* ================================================= */}
+      {/* ERROR */}
+      {/* ================================================= */}
 
-                  <span className="text-xs text-gray-400">
-                    {activity.time}
-                  </span>
+      {!loading && error && (
+
+        <div className="py-10 text-center text-red-500">
+
+          {error}
+
+        </div>
+
+      )}
+
+      {/* ================================================= */}
+      {/* NO DATA */}
+      {/* ================================================= */}
+
+      {!loading &&
+        !error &&
+        filteredActivities.length === 0 && (
+
+          <div className="py-10 text-center text-gray-500">
+
+            No recent activity found.
+
+          </div>
+
+        )}
+
+      {/* ================================================= */}
+      {/* ACTIVITY LIST */}
+      {/* ================================================= */}
+
+      {!loading &&
+        !error &&
+        filteredActivities.length > 0 && (
+
+          <div>
+
+            {filteredActivities.map(
+              (activity, index) => (
+
+                <div
+                  key={`${activity.type}-${index}`}
+                  className="
+                    flex items-center
+                    gap-4
+                    py-5
+                    border-b
+                    border-gray-100
+                    last:border-b-0
+                  "
+                >
+
+                  {/* ICON */}
+
+                  <div
+                    className={`
+                      w-12 h-12
+                      rounded-full
+                      flex
+                      items-center
+                      justify-center
+                      text-lg
+                      flex-shrink-0
+                      ${getIconStyle(activity.type)}
+                    `}
+                  >
+                    {getIcon(activity.type)}
+                  </div>
+
+                  {/* CONTENT */}
+
+                  <div className="flex-1">
+
+                    <h3 className="font-semibold text-gray-800">
+
+                      {activity.title}
+
+                    </h3>
+
+                    <p className="text-gray-500 text-sm mt-1">
+
+                      {activity.description}
+
+                    </p>
+
+                  </div>
+
+                  {/* TIME */}
+
+                  <div className="text-sm text-gray-400 whitespace-nowrap">
+
+                    {formatTime(activity.created_at)}
+
+                  </div>
 
                 </div>
 
-                <p className="text-sm text-gray-500 mt-1">
-                  {activity.description}
-                </p>
+              )
+            )}
 
-              </div>
-
-            </div>
-
-          ))
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            No activity found.
           </div>
+
         )}
 
-      </div>
-
     </div>
+
   );
 }
