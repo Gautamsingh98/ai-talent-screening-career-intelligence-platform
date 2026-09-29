@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   FaUserTie,
   FaBriefcase,
@@ -5,184 +7,371 @@ import {
 } from "react-icons/fa";
 
 export default function AdminTopPerformers() {
-  const recruiters = [
-    {
-      name: "Tech Solutions Pvt. Ltd.",
-      jobs: 12,
-      hires: 28,
-    },
-    {
-      name: "AI Innovations",
-      jobs: 9,
-      hires: 21,
-    },
-    {
-      name: "NextGen Technologies",
-      jobs: 8,
-      hires: 18,
-    },
-    {
-      name: "Global Softwares",
-      jobs: 7,
-      hires: 15,
-    },
-  ];
 
-  const jobs = [
-    {
-      title: "Data Scientist",
-      applications: 245,
-      hires: 18,
-    },
-    {
-      title: "Python Developer",
-      applications: 210,
-      hires: 16,
-    },
-    {
-      title: "AI Engineer",
-      applications: 185,
-      hires: 14,
-    },
-    {
-      title: "Machine Learning Engineer",
-      applications: 160,
-      hires: 12,
-    },
-  ];
+  const [data, setData] = useState({
+    top_recruiters: [],
+    top_jobs: [],
+  });
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+  const [loading, setLoading] = useState(true);
 
-      {/* Top Recruiters */}
-      <div className="bg-white rounded-xl shadow-md p-6">
+  const [error, setError] = useState("");
 
-        <div className="flex items-center gap-3 mb-6">
 
-          <div className="bg-purple-100 text-purple-600 p-3 rounded-full">
-            <FaUserTie />
-          </div>
+  // =========================================================
+  // FETCH DATA
+  // =========================================================
 
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">
-              Top Recruiters
-            </h2>
+  useEffect(() => {
 
-            <p className="text-sm text-gray-500">
-              Recruiters with the highest hiring activity
-            </p>
-          </div>
+    const fetchTopPerformers = async () => {
+
+      try {
+
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+          "http://localhost:5000/api/admin/top-performers",
+          {
+            method: "GET",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Failed to fetch top performers"
+          );
+
+        }
+
+
+        const result = await response.json();
+
+        console.log(
+          "ADMIN TOP PERFORMERS:",
+          result
+        );
+
+
+        setData({
+
+          top_recruiters:
+            result.top_recruiters || [],
+
+          top_jobs:
+            result.top_jobs || [],
+
+        });
+
+      } catch (error) {
+
+        console.error(
+          "Top performers error:",
+          error
+        );
+
+        setError(error.message);
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+
+    fetchTopPerformers();
+
+  }, []);
+
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  if (loading) {
+
+    return (
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <div className="bg-white rounded-xl shadow-md p-6">
+
+          <p className="text-gray-500">
+            Loading top recruiters...
+          </p>
 
         </div>
 
-        <div className="space-y-4">
 
-          {recruiters.map((recruiter, index) => (
+        <div className="bg-white rounded-xl shadow-md p-6">
 
-            <div
-              key={index}
-              className="flex items-center justify-between border-b last:border-b-0 pb-4"
-            >
-
-              <div className="flex items-center gap-3">
-
-                <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-600">
-                  {index + 1}
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-800">
-                    {recruiter.name}
-                  </h3>
-
-                  <p className="text-sm text-gray-500">
-                    {recruiter.jobs} jobs posted
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="text-right">
-
-                <div className="flex items-center gap-2 text-green-600 font-semibold">
-                  <FaTrophy />
-                  {recruiter.hires} hires
-                </div>
-
-              </div>
-
-            </div>
-
-          ))}
+          <p className="text-gray-500">
+            Loading top performing jobs...
+          </p>
 
         </div>
 
       </div>
 
-      {/* Top Performing Jobs */}
+    );
+
+  }
+
+
+  // =========================================================
+  // ERROR
+  // =========================================================
+
+  if (error) {
+
+    return (
+
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+
+        <p className="font-semibold text-red-600">
+          Failed to load top performers
+        </p>
+
+        <p className="text-red-500 mt-1">
+          {error}
+        </p>
+
+      </div>
+
+    );
+
+  }
+
+
+  // =========================================================
+  // UI
+  // =========================================================
+
+  return (
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+
+      {/* =====================================================
+          TOP RECRUITERS
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
-        <div className="flex items-center gap-3 mb-6">
+        {/* HEADER */}
 
-          <div className="bg-blue-100 text-blue-600 p-3 rounded-full">
-            <FaBriefcase />
+        <div className="flex items-center gap-4 mb-6">
+
+          <div className="bg-purple-100 text-purple-600 w-12 h-12 rounded-full flex items-center justify-center">
+
+            <FaUserTie />
+
           </div>
 
+
           <div>
-            <h2 className="text-xl font-bold text-gray-800">
-              Top Performing Jobs
+
+            <h2 className="text-2xl font-bold text-gray-800">
+
+              Top Recruiters
+
             </h2>
 
-            <p className="text-sm text-gray-500">
-              Jobs receiving the most applications
+            <p className="text-gray-500">
+
+              Recruiters with the highest hiring activity
+
             </p>
+
           </div>
 
         </div>
 
-        <div className="space-y-4">
 
-          {jobs.map((job, index) => (
+        {/* RECRUITERS */}
 
-            <div
-              key={index}
-              className="border-b last:border-b-0 pb-4"
-            >
+        {data.top_recruiters.length === 0 ? (
 
-              <div className="flex items-center justify-between">
+          <p className="text-gray-500 py-4">
+            No recruiter data available.
+          </p>
 
-                <div className="flex items-center gap-3">
+        ) : (
 
-                  <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+          data.top_recruiters.map(
+            (recruiter, index) => (
+
+              <div
+                key={recruiter.recruiter_id}
+                className="flex items-center justify-between py-5 border-b border-gray-200 last:border-b-0"
+              >
+
+                <div className="flex items-center gap-4">
+
+                  {/* RANK */}
+
+                  <div className="bg-gray-100 w-11 h-11 rounded-full flex items-center justify-center font-semibold text-gray-700">
+
                     {index + 1}
+
                   </div>
 
+
+                  {/* RECRUITER */}
+
                   <div>
-                    <h3 className="font-semibold text-gray-800">
-                      {job.title}
+
+                    <h3 className="font-semibold text-lg text-gray-800">
+
+                      {recruiter.recruiter}
+
                     </h3>
 
-                    <p className="text-sm text-gray-500">
-                      {job.applications} applications
+                    <p className="text-gray-500">
+
+                      {recruiter.jobs_posted} jobs posted
+
                     </p>
+
                   </div>
 
                 </div>
 
-                <span className="text-green-600 font-semibold">
-                  {job.hires} hires
-                </span>
+
+                {/* HIRES */}
+
+                <div className="flex items-center gap-2 text-green-600 font-semibold">
+
+                  <FaTrophy />
+
+                  {recruiter.hires} hires
+
+                </div>
 
               </div>
 
-            </div>
+            )
+          )
 
-          ))}
+        )}
+
+      </div>
+
+
+      {/* =====================================================
+          TOP PERFORMING JOBS
+      ===================================================== */}
+
+      <div className="bg-white rounded-xl shadow-md p-6">
+
+        {/* HEADER */}
+
+        <div className="flex items-center gap-4 mb-6">
+
+          <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center">
+
+            <FaBriefcase />
+
+          </div>
+
+
+          <div>
+
+            <h2 className="text-2xl font-bold text-gray-800">
+
+              Top Performing Jobs
+
+            </h2>
+
+            <p className="text-gray-500">
+
+              Jobs receiving the most applications
+
+            </p>
+
+          </div>
 
         </div>
+
+
+        {/* JOBS */}
+
+        {data.top_jobs.length === 0 ? (
+
+          <p className="text-gray-500 py-4">
+            No job data available.
+          </p>
+
+        ) : (
+
+          data.top_jobs.map(
+            (job, index) => (
+
+              <div
+                key={job.job_id}
+                className="flex items-center justify-between py-5 border-b border-gray-200 last:border-b-0"
+              >
+
+                <div className="flex items-center gap-4">
+
+                  {/* RANK */}
+
+                  <div className="bg-blue-100 text-blue-600 w-11 h-11 rounded-full flex items-center justify-center font-semibold">
+
+                    {index + 1}
+
+                  </div>
+
+
+                  {/* JOB */}
+
+                  <div>
+
+                    <h3 className="font-semibold text-lg text-gray-800">
+
+                      {job.job_title}
+
+                    </h3>
+
+                    <p className="text-gray-500">
+
+                      {job.applications} applications
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+
+                {/* HIRES */}
+
+                <div className="text-green-600 font-semibold">
+
+                  {job.hires} hires
+
+                </div>
+
+              </div>
+
+            )
+          )
+
+        )}
 
       </div>
 
     </div>
+
   );
+
 }

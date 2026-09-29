@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
+
 import {
-  ResponsiveContainer,
   LineChart,
   Line,
   BarChart,
@@ -9,134 +10,233 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
 
-const chartData = {
-  "7days": [
-    { month: "Mon", candidates: 12, recruiters: 3, applications: 20, hires: 4 },
-    { month: "Tue", candidates: 18, recruiters: 4, applications: 28, hires: 5 },
-    { month: "Wed", candidates: 15, recruiters: 2, applications: 24, hires: 3 },
-    { month: "Thu", candidates: 22, recruiters: 5, applications: 35, hires: 7 },
-    { month: "Fri", candidates: 25, recruiters: 6, applications: 40, hires: 8 },
-    { month: "Sat", candidates: 20, recruiters: 4, applications: 32, hires: 6 },
-    { month: "Sun", candidates: 28, recruiters: 7, applications: 45, hires: 9 },
-  ],
+export default function AdminAnalyticsCharts() {
+  const [userGrowth, setUserGrowth] = useState([]);
+  const [recruitmentPerformance, setRecruitmentPerformance] = useState([]);
 
-  "30days": [
-    { month: "Week 1", candidates: 80, recruiters: 15, applications: 120, hires: 18 },
-    { month: "Week 2", candidates: 95, recruiters: 20, applications: 150, hires: 22 },
-    { month: "Week 3", candidates: 110, recruiters: 24, applications: 180, hires: 28 },
-    { month: "Week 4", candidates: 130, recruiters: 28, applications: 210, hires: 32 },
-  ],
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  "6months": [
-    { month: "Jan", candidates: 220, recruiters: 45, applications: 120, hires: 18 },
-    { month: "Feb", candidates: 260, recruiters: 52, applications: 150, hires: 22 },
-    { month: "Mar", candidates: 300, recruiters: 61, applications: 180, hires: 28 },
-    { month: "Apr", candidates: 340, recruiters: 70, applications: 210, hires: 32 },
-    { month: "May", candidates: 380, recruiters: 84, applications: 260, hires: 38 },
-    { month: "Jun", candidates: 420, recruiters: 100, applications: 320, hires: 45 },
-  ],
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-  year: [
-    { month: "Jan", candidates: 180, recruiters: 35, applications: 100, hires: 15 },
-    { month: "Feb", candidates: 210, recruiters: 40, applications: 130, hires: 18 },
-    { month: "Mar", candidates: 250, recruiters: 48, applications: 160, hires: 23 },
-    { month: "Apr", candidates: 290, recruiters: 55, applications: 190, hires: 27 },
-    { month: "May", candidates: 330, recruiters: 65, applications: 230, hires: 32 },
-    { month: "Jun", candidates: 370, recruiters: 75, applications: 270, hires: 38 },
-    { month: "Jul", candidates: 410, recruiters: 88, applications: 310, hires: 44 },
-    { month: "Aug", candidates: 450, recruiters: 105, applications: 350, hires: 50 },
-  ],
-};
+        if (!token) {
+          throw new Error("Admin authorization token not found");
+        }
 
-export default function AdminAnalyticsCharts({ timeRange }) {
-  const data = chartData[timeRange] || chartData["6months"];
+        const response = await fetch(
+          "http://localhost:5000/api/admin/dashboard",
+          {
+            method: "GET",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+
+          throw new Error(
+            errorData.message || "Failed to fetch dashboard data"
+          );
+        }
+
+        const data = await response.json();
+
+        console.log("ADMIN DASHBOARD CHART DATA:", data);
+
+        setUserGrowth(data.user_growth || []);
+
+        setRecruitmentPerformance(
+          data.recruiter_performance || []
+        );
+
+      } catch (error) {
+        console.error(
+          "Admin analytics charts error:",
+          error
+        );
+
+        setError(error.message);
+
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+        <div className="bg-white rounded-xl shadow-md p-6 h-96 flex items-center justify-center">
+          <p className="text-gray-500">
+            Loading user growth...
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md p-6 h-96 flex items-center justify-center">
+          <p className="text-gray-500">
+            Loading recruitment performance...
+          </p>
+        </div>
+
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
+
+        <p className="font-semibold text-red-600">
+          Failed to load analytics charts
+        </p>
+
+        <p className="text-red-500 mt-1">
+          {error}
+        </p>
+
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
 
-      {/* User Growth */}
+      {/* =====================================================
+          USER GROWTH
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
-        <h2 className="text-xl font-bold text-gray-800 mb-6">
-          User Growth
-        </h2>
+        <div className="mb-6">
 
-        <div className="h-80">
+          <h2 className="text-xl font-bold text-gray-800">
+            User Growth
+          </h2>
 
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+          <p className="text-sm text-gray-500 mt-1">
+            Number of users registered over the last 6 months
+          </p>
 
-              <CartesianGrid strokeDasharray="3 3" />
+        </div>
 
-              <XAxis dataKey="month" />
+        <div className="w-full h-80">
 
-              <YAxis />
+          {userGrowth.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-gray-500">
+                No user growth data available
+              </p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
 
-              <Tooltip />
+              <LineChart data={userGrowth}>
 
-              <Legend />
+                <CartesianGrid strokeDasharray="3 3" />
 
-              <Line
-                type="monotone"
-                dataKey="candidates"
-                stroke="#2563EB"
-                strokeWidth={3}
-                name="Candidates"
-              />
+                <XAxis dataKey="month" />
 
-              <Line
-                type="monotone"
-                dataKey="recruiters"
-                stroke="#9333EA"
-                strokeWidth={3}
-                name="Recruiters"
-              />
+                <YAxis />
 
-            </LineChart>
-          </ResponsiveContainer>
+                <Tooltip />
+
+                <Legend />
+
+                <Line
+                  type="monotone"
+                  dataKey="users"
+                  name="Users"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                  activeDot={{ r: 7 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+          )}
 
         </div>
 
       </div>
 
-      {/* Recruitment Performance */}
+
+      {/* =====================================================
+          RECRUITMENT PERFORMANCE
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
-        <h2 className="text-xl font-bold text-gray-800 mb-6">
-          Recruitment Performance
-        </h2>
+        <div className="mb-6">
 
-        <div className="h-80">
+          <h2 className="text-xl font-bold text-gray-800">
+            Recruitment Performance
+          </h2>
 
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+          <p className="text-sm text-gray-500 mt-1">
+            Applications, interviews, and hires over the last 6 months
+          </p>
 
-              <CartesianGrid strokeDasharray="3 3" />
+        </div>
 
-              <XAxis dataKey="month" />
+        <div className="w-full h-80">
 
-              <YAxis />
+          {recruitmentPerformance.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-gray-500">
+                No recruitment data available
+              </p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
 
-              <Tooltip />
+              <BarChart data={recruitmentPerformance}>
 
-              <Legend />
+                <CartesianGrid strokeDasharray="3 3" />
 
-              <Bar
-                dataKey="applications"
-                fill="#2563EB"
-                name="Applications"
-              />
+                <XAxis dataKey="month" />
 
-              <Bar
-                dataKey="hires"
-                fill="#16A34A"
-                name="Hires"
-              />
+                <YAxis />
 
-            </BarChart>
-          </ResponsiveContainer>
+                <Tooltip />
+
+                <Legend />
+
+                <Bar
+                  dataKey="applications"
+                  name="Applications"
+                  fill="#3b82f6"
+                />
+
+                <Bar
+                  dataKey="interviews"
+                  name="Interviews"
+                  fill="#8b5cf6"
+                />
+
+                <Bar
+                  dataKey="hires"
+                  name="Hires"
+                  fill="#10b981"
+                />
+
+              </BarChart>
+
+            </ResponsiveContainer>
+          )}
 
         </div>
 

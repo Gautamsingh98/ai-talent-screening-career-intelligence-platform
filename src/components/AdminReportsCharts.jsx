@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
+
 import {
-  ResponsiveContainer,
   LineChart,
   Line,
   BarChart,
@@ -8,111 +9,283 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 
-const monthlyData = [
-  {
-    month: "Jan",
-    applications: 120,
-    hires: 18,
-  },
-  {
-    month: "Feb",
-    applications: 150,
-    hires: 22,
-  },
-  {
-    month: "Mar",
-    applications: 180,
-    hires: 28,
-  },
-  {
-    month: "Apr",
-    applications: 210,
-    hires: 32,
-  },
-  {
-    month: "May",
-    applications: 260,
-    hires: 38,
-  },
-  {
-    month: "Jun",
-    applications: 320,
-    hires: 45,
-  },
-];
+export default function AdminAnalyticsCharts() {
 
-export default function AdminReportsCharts() {
+  const [userGrowth, setUserGrowth] = useState([]);
+  const [recruiterPerformance, setRecruiterPerformance] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+
+    const fetchAnalytics = async () => {
+
+      try {
+
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+          "http://localhost:5000/api/admin/analytics",
+          {
+            method: "GET",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Failed to fetch analytics (${response.status})`
+          );
+
+        }
+
+        const data = await response.json();
+
+        console.log(
+          "ADMIN ANALYTICS CHART DATA:",
+          data
+        );
+
+        setUserGrowth(data.user_growth || []);
+
+        setRecruiterPerformance(
+          data.recruiter_performance || []
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Admin analytics charts error:",
+          error
+        );
+
+        setError(error.message);
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+    fetchAnalytics();
+
+  }, []);
+
+
+  if (loading) {
+
+    return (
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+        <div className="bg-white rounded-xl shadow-md p-6">
+          Loading user growth...
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md p-6">
+          Loading recruitment performance...
+        </div>
+
+      </div>
+    );
+
+  }
+
+
+  if (error) {
+
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
+
+        <p className="font-semibold text-red-600">
+          Failed to load analytics charts
+        </p>
+
+        <p className="text-red-500 mt-1">
+          {error}
+        </p>
+
+      </div>
+    );
+
+  }
+
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
 
-      {/* Applications Chart */}
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+
+      {/* =====================================================
+          USER GROWTH
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Monthly Applications
-        </h2>
+        <div className="mb-6">
 
-        <div className="h-72">
+          <h2 className="text-xl font-bold text-gray-800">
+            User Growth
+          </h2>
 
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={monthlyData}>
+          <p className="text-sm text-gray-500 mt-1">
+            Monthly growth of users across the platform.
+          </p>
 
-              <CartesianGrid strokeDasharray="3 3" />
+        </div>
 
-              <XAxis dataKey="month" />
 
-              <YAxis />
+        <div className="w-full h-[320px]">
 
-              <Tooltip />
+          {userGrowth.length === 0 ? (
 
-              <Line
-                type="monotone"
-                dataKey="applications"
-                stroke="#2563EB"
-                strokeWidth={3}
-              />
+            <div className="h-full flex items-center justify-center text-gray-400">
+              No user growth data available.
+            </div>
 
-            </LineChart>
-          </ResponsiveContainer>
+          ) : (
+
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <LineChart
+                data={userGrowth}
+                margin={{
+                  top: 10,
+                  right: 20,
+                  left: 0,
+                  bottom: 10,
+                }}
+              >
+
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="month" />
+
+                <YAxis allowDecimals={false} />
+
+                <Tooltip />
+
+                <Legend />
+
+                <Line
+                  type="monotone"
+                  dataKey="users"
+                  name="Users"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                  activeDot={{ r: 7 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          )}
 
         </div>
 
       </div>
 
-      {/* Hiring Chart */}
+
+
+      {/* =====================================================
+          RECRUITMENT PERFORMANCE
+      ===================================================== */}
+
       <div className="bg-white rounded-xl shadow-md p-6">
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Monthly Hires
-        </h2>
+        <div className="mb-6">
 
-        <div className="h-72">
+          <h2 className="text-xl font-bold text-gray-800">
+            Recruitment Performance
+          </h2>
 
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData}>
+          <p className="text-sm text-gray-500 mt-1">
+            Applications, interviews, and hires over time.
+          </p>
 
-              <CartesianGrid strokeDasharray="3 3" />
+        </div>
 
-              <XAxis dataKey="month" />
 
-              <YAxis />
+        <div className="w-full h-[320px]">
 
-              <Tooltip />
+          {recruiterPerformance.length === 0 ? (
 
-              <Bar
-                dataKey="hires"
-                fill="#16A34A"
-              />
+            <div className="h-full flex items-center justify-center text-gray-400">
+              No recruitment data available.
+            </div>
 
-            </BarChart>
-          </ResponsiveContainer>
+          ) : (
+
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <BarChart
+                data={recruiterPerformance}
+                margin={{
+                  top: 10,
+                  right: 20,
+                  left: 0,
+                  bottom: 10,
+                }}
+              >
+
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="month" />
+
+                <YAxis allowDecimals={false} />
+
+                <Tooltip />
+
+                <Legend />
+
+                <Bar
+                  dataKey="applications"
+                  name="Applications"
+                  fill="#3b82f6"
+                />
+
+                <Bar
+                  dataKey="interviews"
+                  name="Interviews"
+                  fill="#8b5cf6"
+                />
+
+                <Bar
+                  dataKey="hires"
+                  name="Hires"
+                  fill="#10b981"
+                />
+
+              </BarChart>
+
+            </ResponsiveContainer>
+
+          )}
 
         </div>
 
       </div>
 
     </div>
+
   );
+
 }

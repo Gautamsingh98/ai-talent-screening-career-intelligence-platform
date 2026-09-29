@@ -4,11 +4,7 @@ import RecruiterLayout from "../../layouts/RecruiterLayout";
 
 import {
   FaUser,
-  FaBriefcase,
-  FaEnvelope,
-  FaCalendarAlt,
   FaSearch,
-  FaFilter,
 } from "react-icons/fa";
 
 export default function Applicants() {
@@ -300,8 +296,6 @@ export default function Applicants() {
 
             <div className="flex items-center gap-2 mb-4">
 
-              <FaFilter className="text-blue-600" />
-
               <h2 className="font-semibold text-gray-800">
                 Search & Filters
               </h2>
@@ -524,11 +518,11 @@ export default function Applicants() {
 
                             <div className="flex items-center gap-3">
 
-                              <div className="bg-blue-100 p-3 rounded-full">
+                              {/* <div className="bg-blue-100 p-3 rounded-full">
 
                                 <FaUser className="text-blue-600" />
 
-                              </div>
+                              </div> */}
 
                               <span className="font-semibold text-gray-800">
 
@@ -547,9 +541,6 @@ export default function Applicants() {
                           <td className="px-6 py-4">
 
                             <div className="flex items-center gap-2 text-gray-600">
-
-                              <FaEnvelope />
-
                               {applicant.candidate_email}
 
                             </div>
@@ -564,7 +555,7 @@ export default function Applicants() {
 
                             <div className="flex items-center gap-2 text-gray-600">
 
-                              <FaBriefcase />
+                              
 
                               {applicant.job_title}
 
@@ -580,7 +571,7 @@ export default function Applicants() {
 
                             <div className="flex items-center gap-2 text-gray-600">
 
-                              <FaCalendarAlt />
+                              
 
                               {new Date(
                                 applicant.applied_at

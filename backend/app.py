@@ -8,9 +8,21 @@ from routes.candidate_routes import candidate_bp
 
 app = Flask(__name__)
 
-CORS(app)
+# =========================================================
+# CORS CONFIGURATION
+# =========================================================
 
-
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": ["http://localhost:3000"]
+        }
+    },
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    supports_credentials=False
+)
 # Authentication routes
 app.register_blueprint(auth_bp)
 

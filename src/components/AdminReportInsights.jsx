@@ -1,82 +1,136 @@
 import {
-  FaArrowUp,
   FaUsers,
   FaBriefcase,
-  FaUserCheck,
+  FaFileAlt,
+  FaCheckCircle,
 } from "react-icons/fa";
 
 export default function AdminReportInsights() {
+
   const insights = [
-    {
-      title: "Application Growth",
-      description:
-        "Applications increased by 25% compared to the previous month.",
-      icon: <FaArrowUp />,
-      color: "text-green-600",
-      bg: "bg-green-100",
-    },
+
     {
       title: "User Growth",
       description:
-        "Candidate registrations continue to increase across the platform.",
+        "Monitor candidate and recruiter growth across the platform.",
       icon: <FaUsers />,
-      color: "text-blue-600",
       bg: "bg-blue-100",
+      color: "text-blue-600",
     },
+
     {
-      title: "Active Jobs",
+      title: "Job Activity",
       description:
-        "Most recruiter job postings are currently active.",
+        "Track the number of jobs posted by recruiters.",
       icon: <FaBriefcase />,
-      color: "text-purple-600",
       bg: "bg-purple-100",
+      color: "text-purple-600",
     },
+
+    {
+      title: "Application Activity",
+      description:
+        "Analyze how candidates are applying to available jobs.",
+      icon: <FaFileAlt />,
+      bg: "bg-yellow-100",
+      color: "text-yellow-600",
+    },
+
     {
       title: "Hiring Performance",
       description:
-        "The platform currently has a 36% overall hiring rate.",
-      icon: <FaUserCheck />,
-      color: "text-orange-600",
-      bg: "bg-orange-100",
+        "Measure hiring results and overall recruitment performance.",
+      icon: <FaCheckCircle />,
+      bg: "bg-green-100",
+      color: "text-green-600",
     },
+
   ];
 
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-6">
 
-      <h2 className="text-xl font-bold text-gray-800 mb-6">
-        Platform Insights
-      </h2>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* HEADER */}
 
-        {insights.map((insight, index) => (
+      <div className="mb-6">
+
+        <h2 className="text-xl font-bold text-gray-800">
+          Platform Insights
+        </h2>
+
+        <p className="text-gray-500 text-sm mt-1">
+          Key insights into platform activity and recruitment performance.
+        </p>
+
+      </div>
+
+
+      {/* INSIGHTS */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {insights.map((item, index) => (
+
           <div
             key={index}
-            className="border rounded-xl p-5 flex items-start gap-4 hover:shadow-sm transition"
+            className="
+              flex
+              items-start
+              gap-4
+              p-5
+              rounded-xl
+              border
+              border-gray-100
+              hover:shadow-sm
+              transition
+            "
           >
 
+            {/* ICON */}
+
             <div
-              className={`${insight.bg} ${insight.color} p-3 rounded-full text-lg`}
+              className={`
+                w-12
+                h-12
+                rounded-xl
+                flex
+                items-center
+                justify-center
+                text-lg
+                flex-shrink-0
+                ${item.bg}
+                ${item.color}
+              `}
             >
-              {insight.icon}
+
+              {item.icon}
+
             </div>
 
+
+            {/* CONTENT */}
+
             <div>
+
               <h3 className="font-semibold text-gray-800">
-                {insight.title}
+                {item.title}
               </h3>
 
-              <p className="text-sm text-gray-500 mt-1">
-                {insight.description}
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                {item.description}
               </p>
+
             </div>
 
           </div>
+
         ))}
 
       </div>
 
     </div>
+
   );
 }

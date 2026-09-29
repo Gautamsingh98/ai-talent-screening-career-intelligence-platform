@@ -258,10 +258,6 @@ export default function AdminRecentUsers() {
 
                     <div className="flex items-center gap-2 text-gray-600">
 
-                      <FaEnvelope
-                        className="text-gray-400"
-                      />
-
                       <span className="text-sm">
                         {user.email}
                       </span>
@@ -293,10 +289,6 @@ export default function AdminRecentUsers() {
                   <td className="py-4 px-4">
 
                     <div className="flex items-center gap-2 text-gray-500">
-
-                      <FaCalendarAlt
-                        className="text-gray-400"
-                      />
 
                       <span className="text-sm">
 
