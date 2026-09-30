@@ -103,15 +103,6 @@ export default function AdminAnalyticsSummaryCards() {
     },
 
     {
-      title: "Active Jobs",
-      value: analytics?.total_jobs ?? 0,
-      growth: analytics?.growth?.jobs ?? 0,
-      icon: FaBriefcase,
-      iconBg: "bg-orange-100",
-      iconColor: "text-orange-600",
-    },
-
-    {
       title: "Applications",
       value: analytics?.total_applications ?? 0,
       growth: analytics?.growth?.applications ?? 0,
@@ -119,6 +110,16 @@ export default function AdminAnalyticsSummaryCards() {
       iconBg: "bg-yellow-100",
       iconColor: "text-yellow-600",
     },
+
+    {
+      title: "Active Jobs",
+      value: analytics?.total_jobs ?? 0,
+      growth: analytics?.growth?.jobs ?? 0,
+      icon: FaBriefcase,
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
+    },
+
 
     {
       title: "Total Hires",

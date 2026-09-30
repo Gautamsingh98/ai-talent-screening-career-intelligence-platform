@@ -1,19 +1,7 @@
-export default function MissingSkillsCard() {
-  const yourSkills = [
-    "Python",
-    "SQL",
-    "Pandas",
-    "NumPy",
-    "Machine Learning",
-  ];
-
-  const missingSkills = [
-    "Docker",
-    "AWS",
-    "TensorFlow",
-    "Kubernetes",
-  ];
-
+export default function MissingSkillsCard({
+  yourSkills = [],
+  missingSkills = [],
+}) {
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
 
@@ -26,9 +14,15 @@ export default function MissingSkillsCard() {
           </h2>
 
           <ul className="space-y-2">
-            {yourSkills.map((skill) => (
-              <li key={skill}>✅ {skill}</li>
-            ))}
+            {yourSkills.length > 0 ? (
+              yourSkills.map((skill) => (
+                <li key={skill}>✅ {skill}</li>
+              ))
+            ) : (
+              <li className="text-gray-500">
+                No skills found
+              </li>
+            )}
           </ul>
         </div>
 
@@ -39,9 +33,15 @@ export default function MissingSkillsCard() {
           </h2>
 
           <ul className="space-y-2">
-            {missingSkills.map((skill) => (
-              <li key={skill}>❌ {skill}</li>
-            ))}
+            {missingSkills.length > 0 ? (
+              missingSkills.map((skill) => (
+                <li key={skill}>❌ {skill}</li>
+              ))
+            ) : (
+              <li className="text-gray-500">
+                No missing skills
+              </li>
+            )}
           </ul>
         </div>
 

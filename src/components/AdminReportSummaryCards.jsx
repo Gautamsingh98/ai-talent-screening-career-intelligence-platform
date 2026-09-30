@@ -124,8 +124,8 @@ export default function AdminReportSummaryCards() {
       title: "Total Jobs",
       value: report.total_jobs,
       icon: <FaBriefcase />,
-      bg: "bg-purple-100",
-      color: "text-purple-600",
+      bg: "bg-blue-100",
+      color: "text-blue-600",
     },
 
     {

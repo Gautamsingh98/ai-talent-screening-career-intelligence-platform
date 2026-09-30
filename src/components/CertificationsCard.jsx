@@ -1,35 +1,37 @@
-export default function RecommendedCoursesCard({
-  missingSkills = [],
+export default function CertificationsCard({
+  certifications = [],
 }) {
-
-  const courses = missingSkills.map(
-    (skill) => `${skill} Fundamentals`
-  );
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
 
       <h2 className="text-2xl font-bold mb-5">
-        Recommended Courses
+        Recommended Certifications
       </h2>
 
-      {courses.length > 0 ? (
+      {certifications.length > 0 ? (
+
         <ul className="space-y-3">
 
-          {courses.map((course) => (
+          {certifications.map((certification) => (
+
             <li
-              key={course}
+              key={certification}
               className="border rounded-lg p-3 hover:bg-blue-50"
             >
-              📘 {course}
+              🎓 {certification}
             </li>
+
           ))}
 
         </ul>
+
       ) : (
+
         <p className="text-gray-500">
-          No courses recommended. You have all the required skills.
+          No certification recommendations available.
         </p>
+
       )}
 
     </div>

@@ -1,12 +1,6 @@
-export default function CareerReasonCard() {
-
-  const reasons = [
-    "Strong Python Programming Skills",
-    "Excellent SQL Knowledge",
-    "Good Machine Learning Foundation",
-    "Strong Data Analysis Skills",
-    "Good Problem Solving Ability",
-  ];
+export default function CareerReasonCard({
+  reasons = [],
+}) {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
@@ -15,13 +9,38 @@ export default function CareerReasonCard() {
         Why This Career?
       </h2>
 
-      <ul className="space-y-3">
+      {reasons.length > 0 ? (
 
-        {reasons.map((reason) => (
-          <li key={reason}>✅ {reason}</li>
-        ))}
+        <ul className="space-y-3">
 
-      </ul>
+          {reasons.map((reason) => (
+
+            <li
+              key={reason}
+              className="flex items-center gap-3"
+            >
+
+              <span className="text-green-600 text-xl">
+                ✓
+              </span>
+
+              <span>
+                {reason}
+              </span>
+
+            </li>
+
+          ))}
+
+        </ul>
+
+      ) : (
+
+        <p className="text-gray-500">
+          No career reasons available.
+        </p>
+
+      )}
 
     </div>
   );

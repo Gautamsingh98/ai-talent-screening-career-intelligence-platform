@@ -119,10 +119,6 @@ export default function AdminAnalyticsInsights() {
     growth.candidates || 0
   );
 
-  const jobGrowth = Number(
-    growth.jobs || 0
-  );
-
   const applicationGrowth = Number(
     growth.applications || 0
   );
@@ -212,11 +208,11 @@ export default function AdminAnalyticsInsights() {
 
       icon: FaBriefcase,
 
-      iconBg: "bg-purple-100",
+      iconBg: "bg-blue-100",
 
-      iconColor: "text-purple-600",
+      iconColor: "text-blue-600",
 
-      valueColor: "text-purple-600",
+      valueColor: "text-blue-600",
 
       description:
         "Total jobs currently available on the platform.",

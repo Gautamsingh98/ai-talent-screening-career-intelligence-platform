@@ -53,16 +53,16 @@ export default function AdminSummaryCard({
       title: "Jobs Posted",
       value: totalJobs,
       icon: FaBriefcase,
-      bg: "bg-orange-100",
-      iconColor: "text-orange-600",
+      bg: "bg-blue-100",
+      iconColor: "text-blue-600",
     },
 
     {
       title: "Applications",
       value: totalApplications,
       icon: FaFileAlt,
-      bg: "bg-cyan-100",
-      iconColor: "text-cyan-600",
+      bg: "bg-yellow-100",
+      iconColor: "text-yellow-600",
     },
 
     {

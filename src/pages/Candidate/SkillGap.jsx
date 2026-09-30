@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import CandidateLayout from "../../layouts/CandidateLayout";
 
 import JobRoleSelector from "../../components/JobRoleSelector";
@@ -7,6 +8,81 @@ import LearningRoadmapCard from "../../components/LearningRoadmapCard";
 import RecommendedCoursesCard from "../../components/RecommendedCoursesCard";
 
 export default function SkillGap() {
+
+  const [skillGap, setSkillGap] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedJobId, setSelectedJobId] = useState("");
+
+  useEffect(() => {
+
+    const fetchSkillGap = async () => {
+
+      if (!selectedJobId) {
+        return;
+      }
+
+      try {
+
+        setLoading(true);
+        setError("");
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        console.log(
+          "Fetching skill gap for job:",
+          selectedJobId
+        );
+
+        const response = await fetch(
+          `http://localhost:5000/api/candidate/skill-gap?job_id=${selectedJobId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        console.log("SKILL GAP RESPONSE:", data);
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Failed to fetch skill gap analysis"
+          );
+        }
+
+        setSkillGap(data);
+
+      } catch (error) {
+
+        console.error("Skill gap error:", error);
+
+        setError(error.message);
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+    fetchSkillGap();
+
+  }, [selectedJobId]);
+
+
   return (
     <CandidateLayout>
 
@@ -20,23 +96,60 @@ export default function SkillGap() {
         </p>
       </div>
 
-      <JobRoleSelector />
 
-      <div className="mt-8">
-        <SkillMatchCard />
-      </div>
+      <JobRoleSelector
+        selectedJobId={selectedJobId}
+        onJobChange={setSelectedJobId}
+      />
 
-      <div className="mt-8">
-        <MissingSkillsCard />
-      </div>
 
-      <div className="mt-8">
-        <LearningRoadmapCard />
-      </div>
+      {loading && (
+        <p className="text-gray-500 mt-8">
+          Loading skill gap analysis...
+        </p>
+      )}
 
-      <div className="mt-8">
-        <RecommendedCoursesCard />
-      </div>
+
+      {error && (
+        <p className="text-red-500 mt-8">
+          {error}
+        </p>
+      )}
+
+
+      {skillGap && !loading && !error && (
+        <>
+
+          <div className="mt-8">
+            <SkillMatchCard
+              skillMatch={skillGap.overall_skill_match}
+            />
+          </div>
+
+
+          <div className="mt-8">
+            <MissingSkillsCard
+              yourSkills={skillGap.your_skills}
+              missingSkills={skillGap.missing_skills}
+            />
+          </div>
+
+
+          <div className="mt-8">
+            <LearningRoadmapCard
+              missingSkills={skillGap.missing_skills}
+            />
+          </div>
+
+
+          <div className="mt-8">
+            <RecommendedCoursesCard
+              missingSkills={skillGap.missing_skills}
+            />
+          </div>
+
+        </>
+      )}
 
     </CandidateLayout>
   );

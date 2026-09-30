@@ -8,7 +8,6 @@ import RecentActivityCard from "../../components/RecentActivityCard";
 import InterviewProgressCard from "../../components/InterviewProgressCard";
 
 import { useEffect, useState } from "react";
-import API from "../../api/axios";
 
 import {
   FaBriefcase,
@@ -20,36 +19,111 @@ import {
 export default function Dashboard() {
 
   // =========================
-  // USER STATE
+  // DASHBOARD STATE
   // =========================
 
+  const [dashboardData, setDashboardData] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
 
   // =========================
-  // GET LOGGED-IN USER
+  // GET CANDIDATE DASHBOARD
   // =========================
 
   useEffect(() => {
 
-    const fetchProfile = async () => {
+    const fetchDashboard = async () => {
 
       try {
 
-        const response = await API.get("/api/auth/profile");
+        // Get JWT token
+        const token = localStorage.getItem("token");
 
-        setUser(response.data.user);
+        // Check token
+        if (!token) {
 
-      } catch (err) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
 
-        console.error(err);
+        }
 
-        setError(
-          err.response?.data?.message ||
-          "Failed to load user information."
+
+        // =========================
+        // API REQUEST
+        // =========================
+
+        const response = await fetch(
+          "http://localhost:5000/api/candidate/dashboard",
+          {
+            method: "GET",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
+
+
+        // =========================
+        // CHECK RESPONSE
+        // =========================
+
+        if (!response.ok) {
+
+          const errorData = await response.json().catch(() => ({}));
+
+          throw new Error(
+            errorData.message ||
+            "Failed to fetch candidate dashboard"
+          );
+
+        }
+
+
+        // =========================
+        // GET DATA
+        // =========================
+
+        const data = await response.json();
+
+
+        console.log(
+          "CANDIDATE DASHBOARD:",
+          data
+        );
+
+
+        // =========================
+        // SAVE DASHBOARD DATA
+        // =========================
+
+        setDashboardData(data);
+
+
+        // =========================
+        // SAVE CANDIDATE DATA
+        // =========================
+
+        if (data.candidate) {
+
+          setUser(data.candidate);
+
+        }
+
+
+      } catch (error) {
+
+        console.error(
+          "Candidate dashboard error:",
+          error
+        );
+
+        setError(error.message);
+
 
       } finally {
 
@@ -59,7 +133,8 @@ export default function Dashboard() {
 
     };
 
-    fetchProfile();
+
+    fetchDashboard();
 
   }, []);
 
@@ -71,13 +146,19 @@ export default function Dashboard() {
   if (loading) {
 
     return (
-      <div className="flex items-center justify-center min-h-screen">
 
-        <p className="text-gray-600 text-lg">
-          Loading dashboard...
-        </p>
+      <CandidateLayout>
 
-      </div>
+        <div className="flex items-center justify-center min-h-[500px]">
+
+          <p className="text-gray-600 text-lg">
+            Loading dashboard...
+          </p>
+
+        </div>
+
+      </CandidateLayout>
+
     );
 
   }
@@ -90,21 +171,70 @@ export default function Dashboard() {
   if (error) {
 
     return (
-      <div className="flex items-center justify-center min-h-screen">
 
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+      <CandidateLayout>
 
-          <p className="text-red-600">
-            {error}
-          </p>
+        <div className="flex items-center justify-center min-h-[500px]">
+
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+
+            <p className="text-red-600 font-medium">
+              Failed to load dashboard
+            </p>
+
+            <p className="text-red-500 mt-2">
+              {error}
+            </p>
+
+          </div>
 
         </div>
 
-      </div>
+      </CandidateLayout>
+
     );
 
   }
 
+
+  // =========================
+  // GET BACKEND DATA
+  // =========================
+
+  const overview =
+    dashboardData?.overview || {};
+
+
+  // =========================
+  // APPLIED JOBS
+  // =========================
+
+  const appliedJobs =
+    overview.applied_jobs ?? 0;
+
+
+  // =========================
+  // APPLICATIONS THIS WEEK
+  // =========================
+
+  const applicationsThisWeek =
+    overview.applications_this_week ?? 0;
+
+
+  // =========================
+  // RESUME SCORE
+  // =========================
+
+  const resumeScore =
+    overview.resume_score ?? 0;
+
+
+  // =========================
+  // INTERVIEWS
+  // =========================
+
+  const interviewsCompleted =
+    overview.interviews_completed ?? 0;
 
   // =========================
   // DASHBOARD
@@ -141,40 +271,85 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
+
+        {/* =========================
+            APPLIED JOBS
+        ========================= */}
+
         <StatCard
+
           title="Applied Jobs"
-          value="15"
-          subtitle="+2 This Week"
+
+          value={appliedJobs}
+
+          subtitle={`+${applicationsThisWeek} This Week`}
+
           icon={
             <FaBriefcase className="text-blue-600" />
           }
+
         />
 
-        <StatCard
+
+        {/* =========================
+            RESUME SCORE
+        ========================= */}
+
+       <StatCard
           title="Resume Score"
-          value="92%"
-          subtitle="Excellent"
-          icon={
-            <FaFileAlt className="text-green-600" />
+          value={`${resumeScore}%`}
+          subtitle={
+             resumeScore >= 90
+             ? "Excellent"
+             : resumeScore >= 75
+             ? "Good"
+             : resumeScore >= 60
+             ? "Average"
+             : "Needs Improvement"
           }
+          icon={<FaFileAlt className="text-green-600" />}
         />
 
+
+        {/* =========================
+            PRACTICE INTERVIEWS
+        ========================= */}
+
         <StatCard
+
           title="Practice Interviews"
-          value="8"
-          subtitle="Completed"
+
+          value={interviewsCompleted}
+
+          subtitle={
+            interviewsCompleted > 0
+              ? "Completed"
+              : "Not Completed"
+          }
+
           icon={
             <FaRobot className="text-purple-600" />
           }
+
         />
 
+
+        {/* =========================
+            PROFILE STRENGTH
+        ========================= */}
+
         <StatCard
+
           title="Profile Strength"
-          value="85%"
-          subtitle="Good Profile"
+
+          value="--"
+
+          subtitle="Coming from profile analysis"
+
           icon={
             <FaUser className="text-orange-600" />
           }
+
         />
 
       </div>
@@ -226,4 +401,5 @@ export default function Dashboard() {
     </CandidateLayout>
 
   );
+
 }

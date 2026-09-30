@@ -1,10 +1,6 @@
-export default function RecommendedCareerCard() {
-
-  const careers = [
-    { role: "Machine Learning Engineer", match: "90%" },
-    { role: "AI Engineer", match: "87%" },
-    { role: "Data Analyst", match: "84%" },
-  ];
+export default function RecommendedCareerCard({
+  careers = [],
+}) {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
@@ -13,28 +9,38 @@ export default function RecommendedCareerCard() {
         Other Recommended Careers
       </h2>
 
-      <div className="space-y-4">
+      {careers.length > 0 ? (
 
-        {careers.map((career) => (
+        <ul className="space-y-3">
 
-          <div
-            key={career.role}
-            className="flex justify-between items-center border rounded-lg p-4"
-          >
+          {careers.map((career) => (
 
-            <span className="font-semibold">
-              {career.role}
-            </span>
+            <li
+              key={career.job_id}
+              className="border rounded-lg p-4 flex justify-between items-center hover:bg-blue-50"
+            >
 
-            <span className="text-blue-600 font-bold">
-              {career.match}
-            </span>
+              <span className="font-semibold">
+                {career.career}
+              </span>
 
-          </div>
+              <span className="text-blue-600 font-bold">
+                {career.match_percentage}% Match
+              </span>
 
-        ))}
+            </li>
 
-      </div>
+          ))}
+
+        </ul>
+
+      ) : (
+
+        <p className="text-gray-500">
+          No other career recommendations available.
+        </p>
+
+      )}
 
     </div>
   );

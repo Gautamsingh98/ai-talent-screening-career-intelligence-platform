@@ -116,7 +116,7 @@ export default function AdminRecentActivity() {
         return "bg-blue-100 text-blue-600";
 
       case "job":
-        return "bg-purple-100 text-purple-600";
+        return "bg-blue-100 text-blue-600";
 
       case "application":
         return "bg-yellow-100 text-yellow-600";

@@ -1,4 +1,9 @@
-export default function CareerMatchCard() {
+export default function BestCareerMatchCard({ career }) {
+
+  if (!career) {
+    return null;
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
 
@@ -8,14 +13,20 @@ export default function CareerMatchCard() {
 
       <div className="text-center">
 
-        <div className="text-6xl mb-3">🥇</div>
+        <div className="text-5xl mb-4">
+          🏆
+        </div>
 
-        <h1 className="text-4xl font-bold text-blue-600">
-          Data Scientist
-        </h1>
+        <h3 className="text-3xl font-bold text-blue-600">
+          {career.career}
+        </h3>
 
-        <p className="text-2xl font-semibold text-green-600 mt-3">
-          95% Match
+        <p className="text-5xl font-bold text-green-600 mt-4">
+          {career.match_percentage}%
+        </p>
+
+        <p className="text-gray-500 font-semibold mt-2">
+          Match
         </p>
 
       </div>

@@ -128,19 +128,19 @@ export default function AdminReports() {
     },
 
     {
-      title: "Total Jobs",
-      value: overview.total_jobs || 0,
-      icon: FaBriefcase,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-    },
-
-    {
       title: "Applications",
       value: overview.total_applications || 0,
       icon: FaFileAlt,
       iconBg: "bg-yellow-100",
       iconColor: "text-yellow-600",
+    },    
+
+    {
+      title: "Total Jobs",
+      value: overview.total_jobs || 0,
+      icon: FaBriefcase,
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
     },
 
     {
@@ -163,8 +163,8 @@ export default function AdminReports() {
       title: "Hiring Rate",
       value: `${overview.hiring_rate || 0}%`,
       icon: FaChartLine,
-      iconBg: "bg-indigo-100",
-      iconColor: "text-indigo-600",
+      iconBg: "bg-pink-100",
+      iconColor: "text-pink-600",
     },
   ];
 

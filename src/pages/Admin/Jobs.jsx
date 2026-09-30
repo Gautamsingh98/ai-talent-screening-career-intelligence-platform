@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaTrash, FaBriefcase, FaMapMarkerAlt } from "react-icons/fa";
+import { FaTrash, FaBriefcase } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
 
 export default function Jobs() {
@@ -489,8 +489,6 @@ export default function Jobs() {
                       <td className="px-6 py-4">
 
                         <div className="flex items-center gap-2 text-gray-700">
-
-                          <FaMapMarkerAlt className="text-gray-400" />
 
                           {job.location || "Not specified"}
 

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   FaUserTie,
   FaBriefcase,
-  FaTrophy,
 } from "react-icons/fa";
 
 export default function AdminTopPerformers() {
@@ -219,7 +218,7 @@ export default function AdminTopPerformers() {
 
                   {/* RANK */}
 
-                  <div className="bg-gray-100 w-11 h-11 rounded-full flex items-center justify-center font-semibold text-gray-700">
+                  <div className="bg-purple-100 w-11 h-11 rounded-full flex items-center justify-center font-semibold text-purple-700">
 
                     {index + 1}
 
@@ -250,8 +249,6 @@ export default function AdminTopPerformers() {
                 {/* HIRES */}
 
                 <div className="flex items-center gap-2 text-green-600 font-semibold">
-
-                  <FaTrophy />
 
                   {recruiter.hires} hires
 
