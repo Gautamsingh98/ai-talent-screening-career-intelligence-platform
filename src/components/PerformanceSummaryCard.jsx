@@ -7,15 +7,36 @@ import {
 
 import SummaryCard from "./SummaryCard";
 
-export default function PerformanceSummaryCard() {
+export default function PerformanceSummaryCard({ data }) {
+
+  const resumeScore = Number(
+    data?.resume_score || 0
+  );
+
+  const interviewScore = Number(
+    data?.interview_score || 0
+  );
+
+  const jobsApplied = Number(
+    data?.jobs_applied || 0
+  );
+
+  const applicationsThisWeek = Number(
+    data?.applications_this_week || 0
+  );
+
+  const skillMatch = Number(
+    data?.skill_match || 0
+  );
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
       <SummaryCard
         icon={<FaFileAlt />}
         title="Resume Score"
-        value="92%"
-        progress={92}
+        value={`${resumeScore}%`}
+        progress={resumeScore}
         status="+5% This Month"
         color="text-blue-600"
       />
@@ -23,26 +44,34 @@ export default function PerformanceSummaryCard() {
       <SummaryCard
         icon={<FaMicrophone />}
         title="Interview Score"
-        value="88%"
-        progress={88}
-        status="Excellent Performance"
+        value={`${interviewScore}%`}
+        progress={interviewScore}
+        status={
+          interviewScore >= 80
+            ? "Excellent Performance"
+            : "Keep Practicing"
+        }
         color="text-green-600"
       />
 
       <SummaryCard
         icon={<FaBriefcase />}
         title="Jobs Applied"
-        value="15"
-        status="2 Applications This Week"
+        value={jobsApplied}
+        status={`${applicationsThisWeek} Applications This Week`}
         color="text-purple-600"
       />
 
       <SummaryCard
         icon={<FaBrain />}
         title="Skill Match"
-        value="85%"
-        progress={85}
-        status="Top Candidate"
+        value={`${skillMatch}%`}
+        progress={skillMatch}
+        status={
+          skillMatch >= 80
+            ? "Top Candidate"
+            : "Improve Your Skill Match"
+        }
         color="text-orange-500"
       />
 

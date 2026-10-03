@@ -1,11 +1,4 @@
-export default function SkillGapCard() {
-  const skills = [
-    { name: "Docker", level: 60 },
-    { name: "AWS", level: 45 },
-    { name: "Power BI", level: 80 },
-    { name: "Deep Learning", level: 30 },
-  ];
-
+export default function SkillGapCard({ skills = [] }) {
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
 
@@ -15,34 +8,48 @@ export default function SkillGapCard() {
 
       <div className="space-y-5">
 
-        {skills.map((skill) => (
+        {skills.length > 0 ? (
+          skills.slice(0, 5).map((skill, index) => {
 
-          <div key={skill.name}>
+            const skillName = skill.name || skill.skill || "Unknown Skill";
+            const skillLevel = Number(
+              skill.level ?? skill.percentage ?? 0
+            );
 
-            <div className="flex justify-between mb-2">
+            return (
+              <div key={`${skillName}-${index}`}>
 
-              <span className="font-medium">
-                {skill.name}
-              </span>
+                <div className="flex justify-between mb-2">
 
-              <span className="text-blue-600 font-semibold">
-                {skill.level}%
-              </span>
+                  <span className="font-medium">
+                    {skillName}
+                  </span>
 
-            </div>
+                  <span className="text-blue-600 font-semibold">
+                    {skillLevel}%
+                  </span>
 
-            <div className="w-full bg-gray-200 rounded-full h-3">
+                </div>
 
-              <div
-                className="bg-blue-600 h-3 rounded-full"
-                style={{ width: `${skill.level}%` }}
-              ></div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
 
-            </div>
+                  <div
+                    className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(skillLevel, 100)}%`,
+                    }}
+                  ></div>
 
-          </div>
+                </div>
 
-        ))}
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-gray-500">
+            No skill gaps found.
+          </p>
+        )}
 
       </div>
 

@@ -1,22 +1,60 @@
-export default function InterviewHistoryCard() {
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import API from "../api/axios";
 
-  const history = [
-    {
-      role: "Data Scientist",
-      score: "88%",
-      date: "20 Aug 2026",
-    },
-    {
-      role: "Python Developer",
-      score: "82%",
-      date: "15 Aug 2026",
-    },
-    {
-      role: "AI Engineer",
-      score: "91%",
-      date: "10 Aug 2026",
-    },
-  ];
+export default function InterviewHistoryCard() {
+  const navigate = useNavigate();
+
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await API.get(
+        "/api/interview/history"
+      );
+
+      console.log(
+        "Interview history response:",
+        response.data
+      );
+
+      if (response.data.success) {
+        setHistory(response.data.history || []);
+      } else {
+        setError(
+          response.data.message ||
+            "Failed to load interview history."
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Interview history error:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "Failed to load interview history."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const handleViewResult = (interviewId) => {
+    navigate(
+      `/candidate/interview/result/${interviewId}`
+    );
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
@@ -25,36 +63,84 @@ export default function InterviewHistoryCard() {
         Interview History
       </h2>
 
-      <div className="space-y-4">
+      {loading && (
+        <p className="text-gray-500">
+          Loading interview history...
+        </p>
+      )}
 
-        {history.map((item, index) => (
+      {error && (
+        <div className="bg-red-100 border border-red-300 text-red-700 rounded-lg p-3">
+          {error}
+        </div>
+      )}
 
-          <div
-            key={index}
-            className="border rounded-lg p-4 flex justify-between items-center"
-          >
+      {!loading &&
+        !error &&
+        history.length === 0 && (
+          <p className="text-gray-500">
+            No interview history available.
+          </p>
+        )}
 
-            <div>
+      {!loading &&
+        !error &&
+        history.length > 0 && (
+          <div className="space-y-4">
 
-              <h3 className="font-semibold">
-                {item.role}
-              </h3>
+            {history.map((item) => (
 
-              <p className="text-gray-500">
-                {item.date}
-              </p>
+              <div
+                key={item.interview_id}
+                onClick={() =>
+                  handleViewResult(
+                    item.interview_id
+                  )
+                }
+                className="border rounded-lg p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition"
+              >
 
-            </div>
+                <div>
 
-            <span className="text-blue-600 font-bold">
-              {item.score}
-            </span>
+                  <h3 className="font-semibold">
+                    {item.job_role}
+                  </h3>
+
+                  <p className="text-gray-500">
+                    {item.completed_at
+                      ? new Date(
+                          item.completed_at
+                        ).toLocaleDateString(
+                          "en-GB",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )
+                      : "Not completed"}
+                  </p>
+
+                </div>
+
+                <div className="flex items-center gap-4">
+
+                  <span className="text-blue-600 font-bold">
+                    {item.score ?? 0}%
+                  </span>
+
+                  <span className="text-gray-400 text-sm">
+                    View Result →
+                  </span>
+
+                </div>
+
+              </div>
+
+            ))}
 
           </div>
-
-        ))}
-
-      </div>
+        )}
 
     </div>
   );

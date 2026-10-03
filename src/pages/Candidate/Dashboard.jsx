@@ -38,10 +38,12 @@ export default function Dashboard() {
 
       try {
 
-        // Get JWT token
+        // =========================
+        // GET JWT TOKEN
+        // =========================
+
         const token = localStorage.getItem("token");
 
-        // Check token
         if (!token) {
 
           throw new Error(
@@ -74,7 +76,8 @@ export default function Dashboard() {
 
         if (!response.ok) {
 
-          const errorData = await response.json().catch(() => ({}));
+          const errorData =
+            await response.json().catch(() => ({}));
 
           throw new Error(
             errorData.message ||
@@ -85,11 +88,10 @@ export default function Dashboard() {
 
 
         // =========================
-        // GET DATA
+        // GET RESPONSE DATA
         // =========================
 
         const data = await response.json();
-
 
         console.log(
           "CANDIDATE DASHBOARD:",
@@ -114,7 +116,6 @@ export default function Dashboard() {
 
         }
 
-
       } catch (error) {
 
         console.error(
@@ -123,7 +124,6 @@ export default function Dashboard() {
         );
 
         setError(error.message);
-
 
       } finally {
 
@@ -204,6 +204,27 @@ export default function Dashboard() {
   const overview =
     dashboardData?.overview || {};
 
+  const interviewProgress =
+    dashboardData?.interview_progress || {};
+
+  const topSkills =
+    dashboardData?.top_skills || [];
+
+  const recommendedJobs =
+    dashboardData?.recommended_jobs || [];
+
+  const skillGap =
+    dashboardData?.skill_gap || [];
+
+  const recentActivity =
+    dashboardData?.recent_activity || [];
+
+  const weakestTopic =
+    dashboardData?.weakest_topic || {};
+
+  const continuePractice =
+    dashboardData?.continue_practice || null;
+
 
   // =========================
   // APPLIED JOBS
@@ -230,11 +251,64 @@ export default function Dashboard() {
 
 
   // =========================
-  // INTERVIEWS
+  // INTERVIEWS COMPLETED
   // =========================
 
   const interviewsCompleted =
-    overview.interviews_completed ?? 0;
+    overview.interviews_completed ??
+    interviewProgress.completed_interviews ??
+    0;
+
+
+  // =========================
+  // INTERVIEW AVERAGE SCORE
+  // =========================
+
+  const interviewAverageScore =
+    overview.interview_average_score ??
+    interviewProgress.average_score ??
+    0;
+
+
+  // =========================
+  // INTERVIEW BEST SCORE
+  // =========================
+
+  const interviewBestScore =
+    overview.interview_best_score ??
+    interviewProgress.best_score ??
+    0;
+
+
+  // =========================
+  // PROFILE STRENGTH
+  // =========================
+
+  const profileStrength =
+    overview.profile_strength ?? 0;
+
+
+  // =========================
+  // FINAL INTERVIEW DATA
+  // =========================
+  //
+  // This makes sure InterviewProgressCard
+  // always receives the correct values.
+  //
+
+  const interviewData = {
+
+    completed_interviews:
+      interviewsCompleted,
+
+    average_score:
+      interviewAverageScore,
+
+    best_score:
+      interviewBestScore,
+
+  };
+
 
   // =========================
   // DASHBOARD
@@ -295,19 +369,26 @@ export default function Dashboard() {
             RESUME SCORE
         ========================= */}
 
-       <StatCard
+        <StatCard
+
           title="Resume Score"
+
           value={`${resumeScore}%`}
+
           subtitle={
-             resumeScore >= 90
-             ? "Excellent"
-             : resumeScore >= 75
-             ? "Good"
-             : resumeScore >= 60
-             ? "Average"
-             : "Needs Improvement"
+            resumeScore >= 90
+              ? "Excellent"
+              : resumeScore >= 75
+              ? "Good"
+              : resumeScore >= 60
+              ? "Average"
+              : "Needs Improvement"
           }
-          icon={<FaFileAlt className="text-green-600" />}
+
+          icon={
+            <FaFileAlt className="text-green-600" />
+          }
+
         />
 
 
@@ -342,9 +423,15 @@ export default function Dashboard() {
 
           title="Profile Strength"
 
-          value="--"
+          value={`${profileStrength}%`}
 
-          subtitle="Coming from profile analysis"
+          subtitle={
+            profileStrength >= 80
+              ? "Strong Profile"
+              : profileStrength >= 60
+              ? "Good Profile"
+              : "Complete Your Profile"
+          }
 
           icon={
             <FaUser className="text-orange-600" />
@@ -359,7 +446,13 @@ export default function Dashboard() {
           RESUME SCORE
       ========================= */}
 
-      <ResumeScoreCard />
+      <div className="mt-8">
+
+        <ResumeScoreCard
+          score={resumeScore}
+        />
+
+      </div>
 
 
       {/* =========================
@@ -368,9 +461,13 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
 
-        <TopSkillsCard />
+        <TopSkillsCard
+          skills={topSkills}
+        />
 
-        <RecommendedJobsCard />
+        <RecommendedJobsCard
+          jobs={recommendedJobs}
+        />
 
       </div>
 
@@ -381,9 +478,13 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
 
-        <SkillGapCard />
+        <SkillGapCard
+          skills={skillGap}
+        />
 
-        <RecentActivityCard />
+        <RecentActivityCard
+          activities={recentActivity}
+        />
 
       </div>
 
@@ -394,7 +495,15 @@ export default function Dashboard() {
 
       <div className="mt-8">
 
-        <InterviewProgressCard />
+        <InterviewProgressCard
+
+          data={interviewData}
+
+          weakestTopic={weakestTopic}
+
+          continuePractice={continuePractice}
+
+        />
 
       </div>
 

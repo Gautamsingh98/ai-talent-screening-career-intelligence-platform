@@ -5,30 +5,40 @@ import {
   FaRocket,
 } from "react-icons/fa";
 
-export default function AchievementCard() {
+export default function AchievementCard({
+  achievements = [],
+}) {
 
-  const achievements = [
-    {
-      icon: <FaTrophy className="text-yellow-500 text-4xl" />,
-      title: "Resume Master",
-      description: "Resume Score Above 90%",
-    },
-    {
-      icon: <FaStar className="text-blue-500 text-4xl" />,
-      title: "Interview Expert",
-      description: "Completed 5 AI Interviews",
-    },
-    {
-      icon: <FaBullseye className="text-red-500 text-4xl" />,
-      title: "Top Performer",
-      description: "Top 10% Candidate",
-    },
-    {
-      icon: <FaRocket className="text-green-500 text-4xl" />,
-      title: "Active Applicant",
-      description: "Applied to 15 Jobs",
-    },
-  ];
+  const getAchievementIcon = (icon) => {
+
+    switch (icon) {
+
+      case "trophy":
+        return (
+          <FaTrophy className="text-yellow-500 text-4xl" />
+        );
+
+      case "star":
+        return (
+          <FaStar className="text-blue-500 text-4xl" />
+        );
+
+      case "target":
+        return (
+          <FaBullseye className="text-red-500 text-4xl" />
+        );
+
+      case "rocket":
+        return (
+          <FaRocket className="text-green-500 text-4xl" />
+        );
+
+      default:
+        return (
+          <FaTrophy className="text-yellow-500 text-4xl" />
+        );
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
@@ -47,7 +57,9 @@ export default function AchievementCard() {
           >
 
             <div className="mb-4">
-              {achievement.icon}
+              {getAchievementIcon(
+                achievement.icon
+              )}
             </div>
 
             <h3 className="text-xl font-semibold">
