@@ -25,12 +25,12 @@ export default function RecentActivityCard({
 
       case "application":
         return (
-          <FaBriefcase className="text-green-600" />
+          <FaBriefcase className="text-blue-600" />
         );
 
       case "check":
         return (
-          <FaCheckCircle className="text-orange-600" />
+          <FaCheckCircle className="text-green-600" />
         );
 
       default:

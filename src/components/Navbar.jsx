@@ -1,6 +1,135 @@
+import { useEffect, useRef, useState } from "react";
+import API from "../api/axios";
+import { Link } from "react-router-dom";
 import { FaSearch, FaUserCircle, FaBell } from "react-icons/fa";
 
 export default function Navbar() {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
+  const [profile, setProfile] = useState(null);
+  
+  // FETCH CANDIDATE PROFILE
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await API.get("/api/auth/profile");
+        
+        console.log("PROFILE RESPONSE:", response.data);
+
+        if (response.data.user) {
+          setProfile(response.data.user);
+        }
+      } catch (error) {
+        console.error("Failed to fetch candidate profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+
+  // =========================================================
+  // FETCH UNREAD COUNT
+  // =========================================================
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await API.get(
+          "/api/candidate/notifications/unread-count"
+        );
+
+        if (response.data.success) {
+          setUnreadCount(response.data.unread_count);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notification count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, []);
+
+  // =========================================================
+  // CLOSE NOTIFICATION WHEN CLICKING OUTSIDE
+  // =========================================================
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // =========================================================
+  // FETCH ALL NOTIFICATIONS
+  // =========================================================
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await API.get(
+        "/api/candidate/notifications/"
+      );
+
+      if (response.data.success) {
+        setNotifications(response.data.notifications);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
+
+  // =========================================================
+  // MARK NOTIFICATION AS READ
+  // =========================================================
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      const response = await API.put(
+        `/api/candidate/notifications/${notificationId}/read`
+      );
+
+      if (response.data.success) {
+
+        // Update notification status in frontend
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((notification) =>
+            notification.id === notificationId
+              ? { ...notification, is_read: true }
+              : notification
+          )
+        );
+
+        // Update unread count
+        setUnreadCount((prevCount) =>
+          prevCount > 0 ? prevCount - 1 : 0
+        );
+      }
+
+    } catch (error) {
+      console.error(
+        "Failed to mark notification as read:",
+        error
+      );
+    }
+  };
+
+  // =========================================================
+  // NAVBAR
+  // =========================================================
+
   return (
     <header className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
 
@@ -15,6 +144,7 @@ export default function Navbar() {
         </p>
       </div>
 
+
       {/* Search Bar */}
       <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-80">
 
@@ -28,38 +158,133 @@ export default function Navbar() {
 
       </div>
 
+
       {/* Right Side */}
       <div className="flex items-center gap-5">
 
-        {/* Notification Bell */}
-        <div className="relative cursor-pointer">
+        {/* =================================================
+            Notification Bell
+        ================================================= */}
 
-          <FaBell className="text-2xl text-gray-600 hover:text-blue-600 transition" />
+        <div
+          ref={notificationRef}
+          className="relative"
+        >
 
-          {/* Notification Count */}
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-            3
-          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setShowNotifications(!showNotifications);
+              fetchNotifications();
+            }}
+            className="relative cursor-pointer"
+          >
+
+            <FaBell className="text-2xl text-gray-600 hover:text-blue-600 transition" />
+
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+
+          </button>
+
+
+          {/* =================================================
+              Notification Dropdown
+          ================================================= */}
+
+          {showNotifications && (
+            <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50">
+
+              {/* Dropdown Header */}
+              <div className="flex justify-between items-center px-4 py-3 border-b">
+
+                <h3 className="font-semibold text-gray-800">
+                  Notifications
+                </h3>
+
+                <span className="text-sm text-gray-500">
+                  {unreadCount} unread
+                </span>
+
+              </div>
+
+
+              {/* Notification List */}
+              <div className="max-h-96 overflow-y-auto">
+
+                {notifications.length === 0 ? (
+
+                  <div className="p-6 text-center text-gray-500">
+                    No notifications
+                  </div>
+
+                ) : (
+
+                  notifications.map((notification) => (
+
+                    <div
+                      key={notification.id}
+                      onClick={() => {
+                        if (!notification.is_read) {
+                          markNotificationAsRead(notification.id);
+                        }
+                      }}
+                      className={`px-4 py-4 border-b hover:bg-gray-50 cursor-pointer ${
+                        !notification.is_read
+                          ? "bg-blue-50"
+                          : "bg-white"
+                      }`}
+                    >
+
+                      <p className="font-semibold text-gray-800">
+                        {notification.title}
+                      </p>
+
+                      <p className="text-sm text-gray-600 mt-1">
+                        {notification.message}
+                      </p>
+
+                      <p className="text-xs text-gray-400 mt-2">
+                        {notification.created_at}
+                      </p>
+
+                    </div>
+
+                  ))
+
+                )}
+
+              </div>
+
+            </div>
+          )}
 
         </div>
 
-        <div className="flex items-center gap-2">
 
+        {/* =================================================
+            Candidate Profile
+        ================================================= */}
+
+      <Link
+        to="/candidate/profile"
+        className="flex items-center gap-2 cursor-pointer"
+      >
           <FaUserCircle className="text-4xl text-blue-600" />
 
           <div>
-
             <p className="font-semibold">
-              Candidate
+              {profile?.name || "Candidate"}
             </p>
 
             <p className="text-xs text-gray-500">
-              candidate@email.com
+               {profile?.email || "candidate@email.com"}
             </p>
-
           </div>
-
-        </div>
+      </Link>
 
       </div>
 

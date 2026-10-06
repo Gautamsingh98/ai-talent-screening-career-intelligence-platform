@@ -38,7 +38,7 @@ export default function PerformanceSummaryCard({ data }) {
         value={`${resumeScore}%`}
         progress={resumeScore}
         status="+5% This Month"
-        color="text-blue-600"
+        color="text-yellow-600"
       />
 
       <SummaryCard
@@ -59,7 +59,7 @@ export default function PerformanceSummaryCard({ data }) {
         title="Jobs Applied"
         value={jobsApplied}
         status={`${applicationsThisWeek} Applications This Week`}
-        color="text-purple-600"
+        color="text-blue-600"
       />
 
       <SummaryCard

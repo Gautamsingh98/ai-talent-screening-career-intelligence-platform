@@ -189,7 +189,6 @@ def profile():
     try:
 
         connection = get_db_connection()
-
         cursor = connection.cursor(dictionary=True)
 
         cursor.execute(
