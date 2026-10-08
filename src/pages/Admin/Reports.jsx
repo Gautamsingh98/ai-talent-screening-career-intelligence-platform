@@ -9,6 +9,7 @@ import {
   FaUserTie,
   FaCheckCircle,
   FaChartLine,
+  FaDownload,
 } from "react-icons/fa";
 
 import {
@@ -23,9 +24,63 @@ import {
 } from "recharts";
 
 export default function AdminReports() {
-  const [report, setReport] = useState(null);
+  const [downloading, setDownloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [report, setReport] = useState(null);
+
+// =========================================================
+// DOWNLOAD ADMIN REPORT
+// =========================================================
+
+const handleDownloadReport = async () => {
+  try {
+    setDownloading(true);
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      "http://127.0.0.1:5000/api/admin/reports/download",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error("ADMIN REPORT ERROR:", errorText);
+
+      throw new Error("Unable to download admin report");
+    }
+
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "Admin_Report.pdf";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Admin report download error:", error);
+
+    alert("Unable to download admin report.");
+  } finally {
+    setDownloading(false);
+  }
+};
 
   // =========================================================
   // FETCH ADMIN REPORT DATA
@@ -48,7 +103,9 @@ export default function AdminReports() {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch admin report data");
+          throw new Error(
+            "Failed to fetch admin report data"
+          );
         }
 
         const data = await response.json();
@@ -57,7 +114,11 @@ export default function AdminReports() {
 
         setReport(data);
       } catch (error) {
-        console.error("Admin reports error:", error);
+        console.error(
+          "Admin reports error:",
+          error
+        );
+
         setError(error.message);
       } finally {
         setLoading(false);
@@ -112,7 +173,9 @@ export default function AdminReports() {
   const userGrowth = report?.user_growth || [];
 
   const recruitmentPerformance =
-    report?.recruiter_performance || [];
+    report?.recruiter_performance ||
+    report?.recruitment_performance ||
+    [];
 
   // =========================================================
   // SUMMARY CARDS
@@ -133,7 +196,7 @@ export default function AdminReports() {
       icon: FaFileAlt,
       iconBg: "bg-yellow-100",
       iconColor: "text-yellow-600",
-    },    
+    },
 
     {
       title: "Total Jobs",
@@ -378,7 +441,9 @@ export default function AdminReports() {
                 height="100%"
               >
 
-                <LineChart data={recruitmentPerformance}>
+                <LineChart
+                  data={recruitmentPerformance}
+                >
 
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -432,6 +497,25 @@ export default function AdminReports() {
         </div>
 
       </div>
+
+
+      {/* =====================================================
+          DOWNLOAD REPORT
+      ===================================================== */}
+<div className="flex justify-end mt-8 mb-6">
+  <button
+    onClick={handleDownloadReport}
+    disabled={downloading}
+    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
+      downloading
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-blue-600 text-white hover:bg-blue-700"
+    }`}
+  >
+    <FaDownload />
+    {downloading ? "Generating..." : "Download Report"}
+  </button>
+</div>
 
     </AdminLayout>
   );

@@ -105,7 +105,7 @@ export default function AdminSummaryCard({
               </div>
 
               <div
-                className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center`}
+                className={`w-12 h-12 rounded-full ${card.bg} flex items-center justify-center`}
               >
 
                 <Icon

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import {
   FaUserPlus,
@@ -6,6 +7,7 @@ import {
   FaFileAlt,
   FaCheckCircle,
   FaUsers,
+  FaArrowLeft
 } from "react-icons/fa";
 
 export default function AdminRecentActivity() {
@@ -14,6 +16,9 @@ export default function AdminRecentActivity() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isActivityPage = location.pathname === "/admin/activity";
 
   // =====================================================
   // FETCH ADMIN ACTIVITIES
@@ -215,28 +220,46 @@ export default function AdminRecentActivity() {
       {/* HEADER */}
       {/* ================================================= */}
 
-      <div className="flex items-center justify-between mb-6">
+<div className="flex items-center justify-between mb-6">
 
-        <div>
+  <div>
 
-          <h2 className="text-xl font-bold text-gray-800">
-            Recent Platform Activity
-          </h2>
+    {/* BACK ARROW + BACK */}
+    {isActivityPage && (
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium text-sm transition duration-200 mb-2"
+      >
+        <FaArrowLeft />
+        <span>Back</span>
+      </button>
+    )}
 
-          <p className="text-gray-500 text-sm mt-1">
-            Latest activity across the platform
-          </p>
+    <h2 className="text-xl font-bold text-gray-800">
+      {isActivityPage
+        ? "Platform Activity"
+        : "Recent Platform Activity"}
+    </h2>
 
-        </div>
+    <p className="text-gray-500 text-sm mt-1">
+      {isActivityPage
+        ? "View all recent activity across the platform"
+        : "Latest activity across the platform"}
+    </p>
 
-        <button
-          onClick={() => setActiveFilter("all")}
-          className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-        >
-          View All
-        </button>
+  </div>
 
-      </div>
+  {/* VIEW ALL - ONLY ON DASHBOARD */}
+  {!isActivityPage && (
+    <button
+      onClick={() => navigate("/admin/activity")}
+      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition duration-200"
+    >
+      View All
+    </button>
+  )}
+
+</div>
 
       {/* ================================================= */}
       {/* FILTERS */}

@@ -15,6 +15,7 @@ import Dashboard from "../pages/Candidate/Dashboard";
 import Profile from "../pages/Candidate/Profile";
 import Resume from "../pages/Candidate/Resume";
 import Jobs from "../pages/Candidate/Jobs";
+import CandidateJobDetails from "../pages/Candidate/JobDetails";
 import AppliedJobs from "../pages/Candidate/AppliedJobs";
 import ResumeAnalysis from "../pages/Candidate/ResumeAnalysis";
 import SkillGap from "../pages/Candidate/SkillGap";
@@ -30,6 +31,8 @@ import Reports from "../pages/Candidate/Reports";
 
 import RecruiterDashboard from "../pages/Recruiter/Dashboard";
 import RecruiterJobs from "../pages/Recruiter/Jobs";
+import RecruiterJobDetails from "../pages/Recruiter/JobDetails";
+import EditJob from "../pages/Recruiter/EditJob";
 import Applicants from "../pages/Recruiter/Applicants";
 import RecruiterReports from "../pages/Recruiter/Reports";
 import Analytics from "../pages/Recruiter/Analytics";
@@ -47,6 +50,7 @@ import AdminReports from "../pages/Admin/Reports";
 import AdminAnalytics from "../pages/Admin/Analytics";
 import Settings from "../pages/Admin/Settings";
 import Recruiters from "../pages/Admin/Recruiters";
+import AdminRecentActivity from "../components/AdminRecentActivity";
 
 // =====================================================
 // APP ROUTES
@@ -95,6 +99,11 @@ export default function AppRoutes() {
           element={<Jobs />}
         />
 
+        <Route 
+          path="/candidate/jobs/:id"
+          element={<CandidateJobDetails />}
+        />
+
         <Route
           path="/candidate/applied-jobs"
           element={<AppliedJobs />}
@@ -116,7 +125,7 @@ export default function AppRoutes() {
         />
 
         {/* =================================================
-            INTERVIEW - FIRST INTERFACE
+            INTERVIEW
         ================================================= */}
 
         <Route
@@ -124,20 +133,15 @@ export default function AppRoutes() {
           element={<Interview />}
         />
 
-        {/* =================================================
-            INTERVIEW - SECOND INTERFACE
-        ================================================= */}
-
         <Route
           path="/candidate/interview/question"
           element={<InterviewQuestion />}
         />
-        
-        <Route
-        path="/candidate/interview/result/:interviewId"
-        element={<InterviewResult />}
-        />
 
+        <Route
+          path="/candidate/interview/result/:interviewId"
+          element={<InterviewResult />}
+        />
 
         <Route
           path="/candidate/reports"
@@ -159,7 +163,22 @@ export default function AppRoutes() {
         />
 
         <Route
+          path="/recruiter/jobs/:id"
+          element={<RecruiterJobDetails />}
+        />
+
+        <Route
+          path="/recruiter/jobs/:id/edit"
+          element={<EditJob />}
+        />
+
+        <Route
           path="/recruiter/applicants"
+          element={<Applicants />}
+        />
+        
+        <Route
+          path="/recruiter/jobs/:id/applicants"
           element={<Applicants />}
         />
 
@@ -220,6 +239,12 @@ export default function AppRoutes() {
         <Route
           path="/admin/recruiters"
           element={<Recruiters />}
+        />
+
+        {/* ADMIN ACTIVITY */}
+        <Route
+          path="/admin/activity"
+          element={<AdminRecentActivity />}
         />
 
       </Routes>

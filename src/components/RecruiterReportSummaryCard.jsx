@@ -142,11 +142,11 @@ export default function RecruiterReportSummaryCard() {
 
           <div>
 
-            <p className="text-gray-500 text-lg">
+            <p className="text-gray-500 font-normal">
               {card.title}
             </p>
 
-            <h2 className="text-4xl font-bold mt-3">
+            <h2 className="text-3xl font-bold mt-3">
               {card.value}
             </h2>
 
@@ -155,11 +155,11 @@ export default function RecruiterReportSummaryCard() {
           {/* RIGHT SIDE */}
 
           <div
-            className={`w-20 h-20 rounded-full ${card.bg} flex items-center justify-center`}
+            className={`w-16 h-16 rounded-full ${card.bg} flex items-center justify-center`}
           >
 
             <div
-              className={`text-3xl ${card.iconColor}`}
+              className={`text-xl ${card.iconColor}`}
             >
               {card.icon}
             </div>

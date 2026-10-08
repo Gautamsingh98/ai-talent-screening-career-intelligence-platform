@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import RecruiterLayout from "../../layouts/RecruiterLayout";
 
 import {
@@ -7,7 +6,6 @@ import {
   FaUserTie,
   FaClipboardCheck,
   FaChartLine,
-  FaDownload
 } from "react-icons/fa";
 
 import {
@@ -170,75 +168,6 @@ export default function Analytics() {
   const applicationsByJob =
     analytics?.applications_by_job || [];
 
-
-  // =====================================================
-  // DOWNLOAD REPORT
-  // =====================================================
-
-  const handleDownload = async () => {
-
-    try {
-
-      const token =
-        localStorage.getItem("token");
-
-
-      const response = await fetch(
-        "http://localhost:5000/api/recruiter/reports/download",
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
-        }
-      );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          "Failed to download report"
-        );
-      }
-
-
-      const blob =
-        await response.blob();
-
-
-      const url =
-        window.URL.createObjectURL(blob);
-
-
-      const link =
-        document.createElement("a");
-
-
-      link.href = url;
-
-      link.download =
-        "Recruiter_Recruitment_Report.pdf";
-
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      link.remove();
-
-      window.URL.revokeObjectURL(url);
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "Failed to download report."
-      );
-    }
-  };
-
-
   // =====================================================
   // UI
   // =====================================================
@@ -272,28 +201,6 @@ export default function Analytics() {
             </p>
 
           </div>
-
-
-          <button
-            onClick={handleDownload}
-            className="
-              bg-blue-600
-              hover:bg-blue-700
-              text-white
-              px-5
-              py-3
-              rounded-lg
-              flex
-              items-center
-              gap-2
-            "
-          >
-
-            <FaDownload />
-
-            Export PDF
-
-          </button>
 
         </div>
 
@@ -410,10 +317,10 @@ export default function Analytics() {
 
             </div>
 
-            <div className="bg-purple-100 p-5 rounded-full">
+            <div className="bg-pink-100 p-5 rounded-full">
 
               <FaChartLine
-                className="text-purple-600 text-2xl"
+                className="text-pink-600 text-2xl"
               />
 
             </div>

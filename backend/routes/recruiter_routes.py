@@ -1424,7 +1424,7 @@ def create_job():
 
 
 # =========================================================
-# GET RECRUITER JOBS
+# GET RECRUITER JOBS / SEARCH JOBS
 # =========================================================
 
 @recruiter_bp.route("/jobs", methods=["GET"])
@@ -1434,6 +1434,7 @@ def get_recruiter_jobs():
     if request.user["role"] != "Recruiter":
 
         return jsonify({
+            "success": False,
             "message": "Only recruiters can access jobs"
         }), 403
 
@@ -1443,61 +1444,136 @@ def get_recruiter_jobs():
     try:
 
         connection = get_db_connection()
-
         cursor = connection.cursor(dictionary=True)
 
-        cursor.execute(
-    """
-    SELECT
-        jobs.id,
-        jobs.title,
-        jobs.description,
-        jobs.required_skills,
-        jobs.experience,
-        jobs.location,
-        jobs.salary,
-        jobs.status,
-        jobs.created_at,
+        recruiter_id = request.user["user_id"]
 
-        COUNT(applications.id) AS applications
+        # =====================================================
+        # GET SEARCH VALUE
+        # =====================================================
 
-    FROM jobs
+        search = request.args.get("search", "").strip()
 
-    LEFT JOIN applications
-        ON applications.job_id = jobs.id
+        # =====================================================
+        # NO SEARCH
+        # =====================================================
 
-    WHERE jobs.recruiter_id = %s
+        if not search:
 
-    GROUP BY
-        jobs.id,
-        jobs.title,
-        jobs.description,
-        jobs.required_skills,
-        jobs.experience,
-        jobs.location,
-        jobs.salary,
-        jobs.status,
-        jobs.created_at
+            cursor.execute(
+                """
+                SELECT
+                    jobs.id,
+                    jobs.title,
+                    jobs.description,
+                    jobs.required_skills,
+                    jobs.experience,
+                    jobs.location,
+                    jobs.salary,
+                    jobs.status,
+                    jobs.created_at,
 
-    ORDER BY jobs.created_at DESC
-    """,
-    (request.user["user_id"],)
-)
+                    COUNT(applications.id) AS applications
+
+                FROM jobs
+
+                LEFT JOIN applications
+                    ON applications.job_id = jobs.id
+
+                WHERE jobs.recruiter_id = %s
+
+                GROUP BY
+                    jobs.id,
+                    jobs.title,
+                    jobs.description,
+                    jobs.required_skills,
+                    jobs.experience,
+                    jobs.location,
+                    jobs.salary,
+                    jobs.status,
+                    jobs.created_at
+
+                ORDER BY jobs.created_at DESC
+                """,
+                (recruiter_id,)
+            )
+
+        # =====================================================
+        # SEARCH JOBS
+        # =====================================================
+
+        else:
+
+            search_value = f"%{search}%"
+
+            cursor.execute(
+                """
+                SELECT
+                    jobs.id,
+                    jobs.title,
+                    jobs.description,
+                    jobs.required_skills,
+                    jobs.experience,
+                    jobs.location,
+                    jobs.salary,
+                    jobs.status,
+                    jobs.created_at,
+
+                    COUNT(applications.id) AS applications
+
+                FROM jobs
+
+                LEFT JOIN applications
+                    ON applications.job_id = jobs.id
+
+                WHERE jobs.recruiter_id = %s
+
+                AND (
+                    jobs.title LIKE %s
+                    OR jobs.description LIKE %s
+                    OR jobs.required_skills LIKE %s
+                    OR jobs.experience LIKE %s
+                    OR jobs.location LIKE %s
+                )
+
+                GROUP BY
+                    jobs.id,
+                    jobs.title,
+                    jobs.description,
+                    jobs.required_skills,
+                    jobs.experience,
+                    jobs.location,
+                    jobs.salary,
+                    jobs.status,
+                    jobs.created_at
+
+                ORDER BY jobs.created_at DESC
+                """,
+                (
+                    recruiter_id,
+                    search_value,
+                    search_value,
+                    search_value,
+                    search_value,
+                    search_value
+                )
+            )
 
         jobs = cursor.fetchall()
 
         return jsonify({
+            "success": True,
             "jobs": jobs
         }), 200
 
     except Exception as e:
 
+        print("RECRUITER JOB SEARCH ERROR:", str(e))
+
         return jsonify({
-
+            "success": False,
             "message": "Failed to fetch jobs",
-
             "error": str(e)
-
         }), 500
 
     finally:
@@ -1508,6 +1584,118 @@ def get_recruiter_jobs():
         if connection:
             connection.close()
 
+# =========================================================
+# GET RECRUITER JOB DETAILS - DEBUG VERSION
+# =========================================================
+
+@recruiter_bp.route("/jobs/<int:job_id>", methods=["GET"])
+@token_required
+def get_recruiter_job_details(job_id):
+
+    connection = None
+    cursor = None
+
+    try:
+        recruiter_id = request.user["user_id"]
+
+        print("\n========================================")
+        print("JOB DETAILS DEBUG")
+        print("URL JOB ID:", job_id)
+        print("LOGGED-IN USER ID:", recruiter_id)
+        print("LOGGED-IN ROLE:", request.user["role"])
+        print("========================================")
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # -------------------------------------------------
+        # STEP 1: Check whether this job exists at all
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                recruiter_id,
+                title,
+                description,
+                required_skills,
+                experience,
+                location,
+                salary,
+                status,
+                created_at
+            FROM jobs
+            WHERE id = %s
+            """,
+            (job_id,)
+        )
+
+        job = cursor.fetchone()
+
+        print("DATABASE JOB:", job)
+
+        # Job does not exist
+        if not job:
+            print("❌ JOB DOES NOT EXIST IN DATABASE")
+
+            return jsonify({
+                "success": False,
+                "message": "Job does not exist",
+                "job_id": job_id
+            }), 404
+
+        # -------------------------------------------------
+        # STEP 2: Check ownership
+        # -------------------------------------------------
+
+        print("DATABASE RECRUITER ID:", job["recruiter_id"])
+        print("LOGGED-IN RECRUITER ID:", recruiter_id)
+
+        if int(job["recruiter_id"]) != int(recruiter_id):
+
+            print("❌ RECRUITER DOES NOT OWN THIS JOB")
+
+            return jsonify({
+                "success": False,
+                "message": "You are not authorized to view this job",
+                "job_recruiter_id": job["recruiter_id"],
+                "logged_in_recruiter_id": recruiter_id
+            }), 403
+
+        # -------------------------------------------------
+        # STEP 3: Success
+        # -------------------------------------------------
+
+        print("✅ JOB FOUND AND OWNERSHIP VERIFIED")
+
+        job.pop("recruiter_id", None)
+
+        return jsonify({
+            "success": True,
+            "job": job
+        }), 200
+
+    except Exception as e:
+
+        print("\n========================================")
+        print("❌ JOB DETAILS ERROR")
+        print(str(e))
+        print("========================================")
+
+        return jsonify({
+            "success": False,
+            "message": "Failed to fetch job details",
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
 
 # =========================================================
 # GET RECRUITER APPLICANTS

@@ -8,14 +8,51 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef(null);
+
   const [profile, setProfile] = useState(null);
-  
+
+  // =========================================================
+  // SEARCH
+  // =========================================================
+
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const handleSearch = async (value) => {
+    setSearch(value);
+
+    if (!value.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    try {
+      const response = await API.get(
+        `/api/candidate/jobs?search=${encodeURIComponent(value)}`
+      );
+
+      if (response.data.success) {
+        setSearchResults(response.data.jobs);
+        setShowSearchResults(true);
+      }
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResults([]);
+      setShowSearchResults(true);
+    }
+  };
+
+  // =========================================================
   // FETCH CANDIDATE PROFILE
+  // =========================================================
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await API.get("/api/auth/profile");
-        
+
         console.log("PROFILE RESPONSE:", response.data);
 
         if (response.data.user) {
@@ -28,7 +65,6 @@ export default function Navbar() {
 
     fetchProfile();
   }, []);
-
 
   // =========================================================
   // FETCH UNREAD COUNT
@@ -102,8 +138,6 @@ export default function Navbar() {
       );
 
       if (response.data.success) {
-
-        // Update notification status in frontend
         setNotifications((prevNotifications) =>
           prevNotifications.map((notification) =>
             notification.id === notificationId
@@ -112,12 +146,10 @@ export default function Navbar() {
           )
         );
 
-        // Update unread count
         setUnreadCount((prevCount) =>
           prevCount > 0 ? prevCount - 1 : 0
         );
       }
-
     } catch (error) {
       console.error(
         "Failed to mark notification as read:",
@@ -144,20 +176,83 @@ export default function Navbar() {
         </p>
       </div>
 
+      {/* =================================================
+          SEARCH BAR
+      ================================================= */}
 
-      {/* Search Bar */}
-      <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-80">
+      <div className="relative w-80">
 
-        <FaSearch className="text-gray-500" />
+        <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
 
-        <input
-          type="text"
-          placeholder="Search..."
-          className="bg-transparent outline-none ml-2 w-full"
-        />
+          <FaSearch className="text-gray-500" />
+
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search jobs..."
+            className="bg-transparent outline-none ml-2 w-full"
+          />
+
+        </div>
+
+        {/* =================================================
+            SEARCH RESULTS
+        ================================================= */}
+
+        {showSearchResults && (
+          <div className="absolute top-12 left-0 w-full bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+
+            {searchResults.length === 0 ? (
+
+              <div className="p-4 text-sm text-gray-500 text-center">
+                No jobs found
+              </div>
+
+            ) : (
+
+              <div className="max-h-80 overflow-y-auto">
+
+                {searchResults.map((job) => (
+
+                  <Link
+                    key={job.id}
+                    to={`/candidate/jobs/${job.id}`}
+                    onClick={() => {
+                      setShowSearchResults(false);
+                      setSearch("");
+                    }}
+                    className="block px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 transition"
+                  >
+
+                    <p className="font-semibold text-gray-800">
+                      {job.title}
+                    </p>
+
+                    {job.location && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {job.location}
+                      </p>
+                    )}
+
+                    {job.required_skills && (
+                      <p className="text-xs text-gray-400 mt-1 truncate">
+                        {job.required_skills}
+                      </p>
+                    )}
+
+                  </Link>
+
+                ))}
+
+              </div>
+
+            )}
+
+          </div>
+        )}
 
       </div>
-
 
       {/* Right Side */}
       <div className="flex items-center gap-5">
@@ -190,7 +285,6 @@ export default function Navbar() {
 
           </button>
 
-
           {/* =================================================
               Notification Dropdown
           ================================================= */}
@@ -210,7 +304,6 @@ export default function Navbar() {
                 </span>
 
               </div>
-
 
               {/* Notification List */}
               <div className="max-h-96 overflow-y-auto">
@@ -264,27 +357,30 @@ export default function Navbar() {
 
         </div>
 
-
         {/* =================================================
             Candidate Profile
         ================================================= */}
 
-      <Link
-        to="/candidate/profile"
-        className="flex items-center gap-2 cursor-pointer"
-      >
+        <Link
+          to="/candidate/profile"
+          className="flex items-center gap-2 cursor-pointer"
+        >
+
           <FaUserCircle className="text-4xl text-blue-600" />
 
           <div>
+
             <p className="font-semibold">
               {profile?.name || "Candidate"}
             </p>
 
             <p className="text-xs text-gray-500">
-               {profile?.email || "candidate@email.com"}
+              {profile?.email || "candidate@email.com"}
             </p>
+
           </div>
-      </Link>
+
+        </Link>
 
       </div>
 

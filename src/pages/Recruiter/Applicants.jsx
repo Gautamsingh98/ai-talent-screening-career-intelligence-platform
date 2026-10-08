@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import API from "../../api/axios";
 import RecruiterLayout from "../../layouts/RecruiterLayout";
 
 import {
   FaUser,
   FaSearch,
+  FaArrowLeft,
 } from "react-icons/fa";
 
 export default function Applicants() {
+  // =========================
+  // URL PARAMETER
+  // =========================
+
+  const { id: jobId } = useParams();
+  const navigate = useNavigate();
+
   // =========================
   // STATES
   // =========================
@@ -38,9 +47,26 @@ export default function Applicants() {
         "/api/recruiter/applicants"
       );
 
-      setApplicants(
-        response.data.applicants || []
-      );
+      const allApplicants =
+        response.data.applicants || [];
+
+      // If opened from a specific job,
+      // show only applicants for that job.
+      if (jobId) {
+        const jobApplicants = allApplicants.filter(
+          (applicant) =>
+            String(applicant.job_id) === String(jobId)
+        );
+
+        setApplicants(jobApplicants);
+
+        // Automatically select this job in the filter
+        setJobFilter(jobId);
+      } else {
+        // General applicants page
+        setApplicants(allApplicants);
+        setJobFilter("All");
+      }
 
     } catch (err) {
       console.error(
@@ -56,7 +82,7 @@ export default function Applicants() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [jobId]);
 
   // =========================
   // LOAD APPLICANTS
@@ -208,7 +234,14 @@ export default function Applicants() {
   const handleResetFilters = () => {
     setSearch("");
     setStatusFilter("All");
-    setJobFilter("All");
+
+    // Keep selected job when viewing
+    // applicants for a specific job.
+    if (jobId) {
+      setJobFilter(jobId);
+    } else {
+      setJobFilter("All");
+    }
   };
 
   // =========================
@@ -224,13 +257,32 @@ export default function Applicants() {
 
       <div className="mb-8">
 
+        {/* Back to Job Details */}
+        {jobId && (
+          <button
+            onClick={() =>
+              navigate(`/recruiter/jobs/${jobId}`)
+            }
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition mb-4"
+          >
+            <FaArrowLeft />
+
+            <span className="font-medium">
+              Back to Job Details
+            </span>
+          </button>
+        )}
+
         <h1 className="text-3xl font-bold text-gray-800">
-          Applicants
+          {jobId
+            ? "Job Applicants"
+            : "Applicants"}
         </h1>
 
         <p className="text-gray-500 mt-2">
-          View candidates who have applied for your jobs
-          and manage their application status.
+          {jobId
+            ? "View candidates who applied for this job and manage their application status."
+            : "View candidates who have applied for your jobs and manage their application status."}
         </p>
 
       </div>
@@ -240,11 +292,9 @@ export default function Applicants() {
       ========================= */}
 
       {error && (
-
         <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 mb-6">
           {error}
         </div>
-
       )}
 
       {/* =========================
@@ -278,8 +328,9 @@ export default function Applicants() {
           </h2>
 
           <p className="text-gray-500 mt-2">
-            Candidates who apply for your jobs
-            will appear here.
+            {jobId
+              ? "No candidates have applied for this job yet."
+              : "Candidates who apply for your jobs will appear here."}
           </p>
 
         </div>
@@ -365,7 +416,8 @@ export default function Applicants() {
                 onChange={(e) =>
                   setJobFilter(e.target.value)
                 }
-                className="border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!!jobId}
+                className="border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
 
                 <option value="All">
@@ -373,11 +425,11 @@ export default function Applicants() {
                 </option>
 
                 {uniqueJobs.map(
-                  ([jobId, jobTitle]) => (
+                  ([jobIdValue, jobTitle]) => (
 
                     <option
-                      key={jobId}
-                      value={jobId}
+                      key={jobIdValue}
+                      value={jobIdValue}
                     >
                       {jobTitle}
                     </option>
@@ -414,8 +466,7 @@ export default function Applicants() {
               {/* RESET */}
 
               {(search ||
-                statusFilter !== "All" ||
-                jobFilter !== "All") && (
+                statusFilter !== "All") && (
 
                 <button
                   onClick={handleResetFilters}
@@ -447,8 +498,7 @@ export default function Applicants() {
               </h2>
 
               <p className="text-gray-500 mt-2">
-                No applicants match your current
-                search or filters.
+                No applicants match your current search or filters.
               </p>
 
               <button
@@ -510,68 +560,45 @@ export default function Applicants() {
                           className="border-t hover:bg-gray-50"
                         >
 
-                          {/* =========================
-                              CANDIDATE
-                          ========================= */}
+                          {/* CANDIDATE */}
 
                           <td className="px-6 py-4">
 
                             <div className="flex items-center gap-3">
 
-                              {/* <div className="bg-blue-100 p-3 rounded-full">
-
-                                <FaUser className="text-blue-600" />
-
-                              </div> */}
-
                               <span className="font-semibold text-gray-800">
-
                                 {applicant.candidate_name}
-
                               </span>
 
                             </div>
 
                           </td>
 
-                          {/* =========================
-                              EMAIL
-                          ========================= */}
+                          {/* EMAIL */}
 
                           <td className="px-6 py-4">
 
                             <div className="flex items-center gap-2 text-gray-600">
                               {applicant.candidate_email}
-
                             </div>
 
                           </td>
 
-                          {/* =========================
-                              JOB
-                          ========================= */}
+                          {/* JOB */}
 
                           <td className="px-6 py-4">
 
                             <div className="flex items-center gap-2 text-gray-600">
-
-                              
-
                               {applicant.job_title}
-
                             </div>
 
                           </td>
 
-                          {/* =========================
-                              APPLIED DATE
-                          ========================= */}
+                          {/* APPLIED DATE */}
 
                           <td className="px-6 py-4">
 
                             <div className="flex items-center gap-2 text-gray-600">
-
-                              
 
                               {new Date(
                                 applicant.applied_at
@@ -581,9 +608,7 @@ export default function Applicants() {
 
                           </td>
 
-                          {/* =========================
-                              STATUS
-                          ========================= */}
+                          {/* STATUS */}
 
                           <td className="px-6 py-4">
 

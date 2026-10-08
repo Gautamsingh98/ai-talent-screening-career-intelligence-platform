@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import {
   FaUser,
   FaUserTie,
-  FaEnvelope,
-  FaCalendarAlt,
 } from "react-icons/fa";
 
 export default function AdminRecentUsers() {
@@ -183,19 +181,19 @@ export default function AdminRecentUsers() {
 
               <tr className="border-b text-left">
 
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-sm font-bold text-gray-600">
                   User
                 </th>
 
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-sm font-bold text-gray-600">
                   Email
                 </th>
 
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-sm font-bold text-gray-600">
                   Role
                 </th>
 
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600">
+                <th className="py-3 px-4 text-sm font-bold text-gray-600">
                   Registered
                 </th>
 

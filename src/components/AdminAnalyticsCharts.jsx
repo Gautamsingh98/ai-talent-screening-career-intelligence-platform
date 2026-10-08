@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export default function AdminAnalyticsCharts() {
+export default function AdminAnalyticsCharts({ timeRange }) {
   const [userGrowth, setUserGrowth] = useState([]);
   const [recruitmentPerformance, setRecruitmentPerformance] = useState([]);
 
@@ -21,8 +21,11 @@ export default function AdminAnalyticsCharts() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchAnalyticsData = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const token = localStorage.getItem("token");
 
         if (!token) {
@@ -30,7 +33,7 @@ export default function AdminAnalyticsCharts() {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/admin/dashboard",
+          `http://127.0.0.1:5000/api/admin/analytics?timeRange=${timeRange}`,
           {
             method: "GET",
 
@@ -45,18 +48,18 @@ export default function AdminAnalyticsCharts() {
           const errorData = await response.json().catch(() => ({}));
 
           throw new Error(
-            errorData.message || "Failed to fetch dashboard data"
+            errorData.message || "Failed to fetch analytics data"
           );
         }
 
         const data = await response.json();
 
-        console.log("ADMIN DASHBOARD CHART DATA:", data);
+        console.log("ADMIN ANALYTICS CHART DATA:", data);
 
         setUserGrowth(data.user_growth || []);
 
         setRecruitmentPerformance(
-          data.recruiter_performance || []
+          data.recruitment_performance || []
         );
 
       } catch (error) {
@@ -72,8 +75,9 @@ export default function AdminAnalyticsCharts() {
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    fetchAnalyticsData();
+
+  }, [timeRange]);
 
   if (loading) {
     return (
@@ -127,7 +131,7 @@ export default function AdminAnalyticsCharts() {
           </h2>
 
           <p className="text-sm text-gray-500 mt-1">
-            Number of users registered over the last 6 months
+            User registrations for the selected time period
           </p>
 
         </div>
@@ -187,7 +191,7 @@ export default function AdminAnalyticsCharts() {
           </h2>
 
           <p className="text-sm text-gray-500 mt-1">
-            Applications, interviews, and hires over the last 6 months
+            Applications, interviews, and hires for the selected time period
           </p>
 
         </div>

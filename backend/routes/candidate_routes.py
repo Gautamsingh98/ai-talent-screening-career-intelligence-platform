@@ -955,7 +955,7 @@ def candidate_dashboard():
             connection.close()
 
 # =========================
-# GET ACTIVE JOBS
+# GET ACTIVE JOBS / SEARCH JOBS
 # =========================
 
 @candidate_bp.route("/jobs", methods=["GET"])
@@ -965,6 +965,7 @@ def get_jobs():
     if request.user["role"] != "Candidate":
 
         return jsonify({
+            "success": False,
             "message": "Only candidates can access jobs"
         }), 403
 
@@ -974,7 +975,122 @@ def get_jobs():
     try:
 
         connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
 
+        # =========================================================
+        # GET SEARCH VALUE
+        # =========================================================
+
+        search = request.args.get("search", "").strip()
+
+        # =========================================================
+        # WITHOUT SEARCH
+        # =========================================================
+
+        if not search:
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    description,
+                    required_skills,
+                    experience,
+                    location,
+                    salary,
+                    status,
+                    created_at
+                FROM jobs
+                WHERE status = 'Active'
+                ORDER BY created_at DESC
+                """
+            )
+
+        # =========================================================
+        # WITH SEARCH
+        # =========================================================
+
+        else:
+
+            search_value = f"%{search}%"
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    description,
+                    required_skills,
+                    experience,
+                    location,
+                    salary,
+                    status,
+                    created_at
+                FROM jobs
+                WHERE status = 'Active'
+                AND (
+                    title LIKE %s
+                    OR description LIKE %s
+                    OR required_skills LIKE %s
+                    OR experience LIKE %s
+                    OR location LIKE %s
+                )
+                ORDER BY created_at DESC
+                """,
+                (
+                    search_value,
+                    search_value,
+                    search_value,
+                    search_value,
+                    search_value
+                )
+            )
+
+        jobs = cursor.fetchall()
+
+        return jsonify({
+            "success": True,
+            "jobs": jobs
+        }), 200
+
+    except Exception as e:
+
+        print("CANDIDATE JOB SEARCH ERROR:", str(e))
+
+        return jsonify({
+            "success": False,
+            "message": "Failed to fetch jobs",
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+# =========================
+# GET SINGLE JOB DETAILS
+# =========================
+
+@candidate_bp.route("/jobs/<int:job_id>", methods=["GET"])
+@token_required
+def get_job_details(job_id):
+
+    if request.user["role"] != "Candidate":
+        return jsonify({
+            "success": False,
+            "message": "Only candidates can access job details"
+        }), 403
+
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
         cursor.execute(
@@ -990,21 +1106,32 @@ def get_jobs():
                 status,
                 created_at
             FROM jobs
-            WHERE status = 'Active'
-            ORDER BY created_at DESC
-            """
+            WHERE id = %s
+            AND status = 'Active'
+            """,
+            (job_id,)
         )
 
-        jobs = cursor.fetchall()
+        job = cursor.fetchone()
+
+        if not job:
+            return jsonify({
+                "success": False,
+                "message": "Job not found"
+            }), 404
 
         return jsonify({
-            "jobs": jobs
+            "success": True,
+            "job": job
         }), 200
 
     except Exception as e:
 
+        print("JOB DETAILS ERROR:", str(e))
+
         return jsonify({
-            "message": "Failed to fetch jobs",
+            "success": False,
+            "message": "Failed to fetch job details",
             "error": str(e)
         }), 500
 
@@ -1015,7 +1142,6 @@ def get_jobs():
 
         if connection:
             connection.close()
-
 
 # =========================
 # APPLY FOR JOB

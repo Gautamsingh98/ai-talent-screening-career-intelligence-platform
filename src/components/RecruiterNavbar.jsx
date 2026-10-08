@@ -5,12 +5,43 @@ import { FaSearch, FaUserCircle, FaBell } from "react-icons/fa";
 export default function RecruiterNavbar() {
   const [profile, setProfile] = useState(null);
 
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
   // Notification states
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const notificationRef = useRef(null);
+
+// =========================================================
+// SEARCH RECRUITER JOBS
+// =========================================================
+
+const handleSearch = async (value) => {
+  setSearch(value);
+
+  if (!value.trim()) {
+    setSearchResults([]);
+    setShowSearchResults(false);
+    return;
+  }
+
+  try {
+    const response = await API.get(
+      `/api/recruiter/jobs?search=${encodeURIComponent(value)}`
+    );
+
+    if (response.data.success) {
+      setSearchResults(response.data.jobs);
+      setShowSearchResults(true);
+    }
+  } catch (error) {
+    console.error("Recruiter job search failed:", error);
+  }
+};
 
   // =========================================================
   // FETCH LOGGED-IN RECRUITER PROFILE
@@ -160,21 +191,82 @@ export default function RecruiterNavbar() {
       </div>
 
 
-      {/* =====================================================
-          SEARCH
-      ====================================================== */}
+{/* =====================================================
+    SEARCH
+===================================================== */}
 
-      <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2 w-80">
+<div className="relative w-80">
 
-        <FaSearch className="text-gray-500" />
+  <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
 
-        <input
-          type="text"
-          placeholder="Search..."
-          className="bg-transparent outline-none ml-2 w-full"
-        />
+    <FaSearch className="text-gray-500" />
 
-      </div>
+    <input
+      type="text"
+      value={search}
+      onChange={(e) => handleSearch(e.target.value)}
+      placeholder="Search jobs..."
+      className="bg-transparent outline-none ml-2 w-full"
+    />
+
+  </div>
+
+
+  {/* SEARCH RESULTS */}
+
+  {showSearchResults && (
+    <div className="absolute top-12 left-0 w-full bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+
+      {searchResults.length === 0 ? (
+
+        <div className="p-4 text-sm text-gray-500 text-center">
+          No jobs found
+        </div>
+
+      ) : (
+
+        <div className="max-h-80 overflow-y-auto">
+
+          {searchResults.map((job) => (
+
+            <div
+              key={job.id}
+              onClick={() => {
+                setShowSearchResults(false);
+                setSearch("");
+                window.location.href = `/recruiter/jobs/${job.id}`;
+              }}
+              className="px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition"
+            >
+
+              <p className="font-semibold text-gray-800">
+                {job.title}
+              </p>
+
+              {job.location && (
+                <p className="text-sm text-gray-500 mt-1">
+                  {job.location}
+                </p>
+              )}
+
+              {job.required_skills && (
+                <p className="text-xs text-gray-400 mt-1 truncate">
+                  {job.required_skills}
+                </p>
+              )}
+
+            </div>
+
+          ))}
+
+        </div>
+
+      )}
+
+    </div>
+  )}
+
+</div>
 
 
       {/* =====================================================
