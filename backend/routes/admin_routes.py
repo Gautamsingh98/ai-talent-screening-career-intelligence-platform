@@ -795,6 +795,118 @@ def admin_users():
         if connection:
             connection.close()
 
+
+# =========================================================
+# ADMIN GLOBAL SEARCH
+# =========================================================
+
+@admin_bp.route("/search", methods=["GET"])
+@token_required
+@role_required("Admin")
+def admin_global_search():
+
+    connection = None
+    cursor = None
+
+    try:
+        search_query = request.args.get("q", "").strip()
+
+        if not search_query:
+            return jsonify({
+                "success": True,
+                "results": []
+            }), 200
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        search_value = f"%{search_query}%"
+        results = []
+
+        # =====================================================
+        # 1. SEARCH CANDIDATES AND RECRUITERS
+        # =====================================================
+
+        cursor.execute("""
+            SELECT
+                id,
+                name,
+                email,
+                role AS type
+            FROM users
+            WHERE role IN ('Candidate', 'Recruiter')
+              AND (
+                    name LIKE %s
+                    OR email LIKE %s
+              )
+            ORDER BY name ASC
+            LIMIT 10
+        """, (search_value, search_value))
+
+        users = cursor.fetchall()
+
+        for user in users:
+            results.append({
+                "id": user["id"],
+                "name": user["name"],
+                "email": user["email"],
+                "type": user["type"]
+            })
+
+        # =====================================================
+        # 2. SEARCH JOBS
+        # =====================================================
+
+        cursor.execute("""
+            SELECT
+                id,
+                title,
+                description,
+                location
+            FROM jobs
+            WHERE title LIKE %s
+               OR description LIKE %s
+               OR location LIKE %s
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (
+            search_value,
+            search_value,
+            search_value
+        ))
+
+        jobs = cursor.fetchall()
+
+        for job in jobs:
+            results.append({
+                "id": job["id"],
+                "title": job["title"],
+                "description": job["description"],
+                "location": job["location"],
+                "type": "Job"
+            })
+
+        return jsonify({
+            "success": True,
+            "results": results[:15]
+        }), 200
+
+    except Exception as e:
+        print("ADMIN SEARCH ERROR:", str(e))
+
+        return jsonify({
+            "success": False,
+            "message": "Failed to search admin records",
+            "error": str(e)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
 # =========================================================
 # ACTIVATE / DEACTIVATE USER
 # =========================================================

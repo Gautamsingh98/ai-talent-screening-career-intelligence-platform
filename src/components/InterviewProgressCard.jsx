@@ -77,8 +77,6 @@ export default function InterviewProgressCard({
 
       <div className="flex items-center gap-3 mb-6">
 
-        <FaRobot className="text-3xl text-blue-600" />
-
         <h2 className="text-2xl font-bold">
           Practice Interview Progress
         </h2>

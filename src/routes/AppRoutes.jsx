@@ -51,6 +51,9 @@ import AdminAnalytics from "../pages/Admin/Analytics";
 import Settings from "../pages/Admin/Settings";
 import Recruiters from "../pages/Admin/Recruiters";
 import AdminRecentActivity from "../components/AdminRecentActivity";
+import AdminUserDetails from "../pages/Admin/UserDetails";
+import AdminRecruiterDetails from "../pages/Admin/RecruiterDetails";
+import AdminJobDetails from "../pages/Admin/JobDetails";
 
 // =====================================================
 // APP ROUTES
@@ -240,6 +243,22 @@ export default function AppRoutes() {
           path="/admin/recruiters"
           element={<Recruiters />}
         />
+      
+{/* Admin record detail pages */}
+<Route
+  path="/admin/users/:id"
+  element={<AdminUserDetails />}
+/>
+
+<Route
+  path="/admin/recruiters/:id"
+  element={<AdminRecruiterDetails />}
+/>
+
+<Route
+  path="/admin/jobs/:id"
+  element={<AdminJobDetails />}
+/>
 
         {/* ADMIN ACTIVITY */}
         <Route

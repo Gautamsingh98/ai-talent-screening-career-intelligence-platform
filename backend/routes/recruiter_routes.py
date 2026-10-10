@@ -1585,6 +1585,246 @@ def get_recruiter_jobs():
             connection.close()
 
 # =========================================================
+# RECRUITER GLOBAL SEARCH
+# Search jobs, candidates, applications, and resumes
+# =========================================================
+
+@recruiter_bp.route("/search", methods=["GET"])
+@token_required
+def recruiter_global_search():
+
+    if request.user["role"] != "Recruiter":
+        return jsonify({
+            "success": False,
+            "message": "Only recruiters can use global search"
+        }), 403
+
+    connection = None
+    cursor = None
+
+    try:
+        search = request.args.get("q", "").strip()
+
+        if not search:
+            return jsonify({
+                "success": True,
+                "results": []
+            }), 200
+
+        search_value = f"%{search}%"
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        recruiter_id = request.user["user_id"]
+        results = []
+
+        # -------------------------------------------------
+        # 1. SEARCH JOBS OWNED BY THIS RECRUITER
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                title,
+                description,
+                location,
+                required_skills,
+                status
+            FROM jobs
+            WHERE recruiter_id = %s
+            AND (
+                title LIKE %s
+                OR description LIKE %s
+                OR location LIKE %s
+                OR required_skills LIKE %s
+            )
+            LIMIT 10
+            """,
+            (
+                recruiter_id,
+                search_value,
+                search_value,
+                search_value,
+                search_value
+            )
+        )
+
+        for job in cursor.fetchall():
+            results.append({
+                "id": job["id"],
+                "title": job["title"],
+                "description": job["description"],
+                "location": job["location"],
+                "required_skills": job["required_skills"],
+                "status": job["status"],
+                "type": "Job"
+            })
+
+        # -------------------------------------------------
+        # 2. SEARCH CANDIDATES WHO APPLIED TO RECRUITER JOBS
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT DISTINCT
+                users.id,
+                users.name,
+                users.email
+            FROM users
+            INNER JOIN applications
+                ON applications.candidate_id = users.id
+            INNER JOIN jobs
+                ON jobs.id = applications.job_id
+            WHERE jobs.recruiter_id = %s
+            AND (
+                users.name LIKE %s
+                OR users.email LIKE %s
+            )
+            LIMIT 10
+            """,
+            (
+                recruiter_id,
+                search_value,
+                search_value
+            )
+        )
+
+        for candidate in cursor.fetchall():
+            results.append({
+                "id": candidate["id"],
+                "name": candidate["name"],
+                "email": candidate["email"],
+                "type": "Candidate"
+            })
+
+        # -------------------------------------------------
+        # 3. SEARCH APPLICATIONS FOR RECRUITER JOBS
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                applications.id,
+                users.name AS candidate_name,
+                users.email AS candidate_email,
+                jobs.title AS job_title,
+                applications.status
+            FROM applications
+            INNER JOIN users
+                ON users.id = applications.candidate_id
+            INNER JOIN jobs
+                ON jobs.id = applications.job_id
+            WHERE jobs.recruiter_id = %s
+            AND (
+                users.name LIKE %s
+                OR users.email LIKE %s
+                OR jobs.title LIKE %s
+                OR applications.status LIKE %s
+            )
+            LIMIT 10
+            """,
+            (
+                recruiter_id,
+                search_value,
+                search_value,
+                search_value,
+                search_value
+            )
+        )
+
+        # -------------------------------------------------
+        # ADD APPLICATION SEARCH RESULTS
+        # -------------------------------------------------
+
+        for application in cursor.fetchall():
+            results.append({
+                "id": application["id"],
+                "title": (
+                    f'{application["candidate_name"]} - '
+                    f'{application["job_title"]}'
+                ),
+                "candidate_name": application["candidate_name"],
+                "candidate_email": application["candidate_email"],
+                "job_title": application["job_title"],
+                "status": application["status"],
+                "type": "Application"
+            })
+
+        # -------------------------------------------------
+        # 4. SEARCH RESUMES FOR CANDIDATES WHO APPLIED
+        # -------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT DISTINCT
+                applications.id AS application_id,
+                users.name AS candidate_name,
+                users.email AS candidate_email,
+                jobs.title AS job_title
+            FROM applications
+            INNER JOIN users
+                ON users.id = applications.candidate_id
+            INNER JOIN jobs
+                ON jobs.id = applications.job_id
+            INNER JOIN resumes
+                ON resumes.user_id = users.id
+            WHERE jobs.recruiter_id = %s
+            AND (
+                users.name LIKE %s
+                OR users.email LIKE %s
+                OR resumes.original_filename LIKE %s
+            )
+            LIMIT 10
+            """,
+            (
+                recruiter_id,
+                search_value,
+                search_value,
+                search_value
+            )
+        )
+
+        # -------------------------------------------------
+        # ADD RESUME SEARCH RESULTS
+        # -------------------------------------------------
+
+        for resume in cursor.fetchall():
+            results.append({
+                "id": resume["application_id"],
+                "title": (
+                    f'{resume["candidate_name"]} - '
+                    f'{resume["job_title"]} Resume'
+                ),
+                "candidate_name": resume["candidate_name"],
+                "candidate_email": resume["candidate_email"],
+                "job_title": resume["job_title"],
+                "type": "Resume"
+            })
+
+        return jsonify({
+            "success": True,
+            "results": results
+        }), 200
+
+    except Exception as e:
+        print("RECRUITER GLOBAL SEARCH ERROR:", str(e))
+
+        return jsonify({
+            "success": False,
+            "message": "Global search failed",
+            "error": str(e)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
+
+# =========================================================
 # GET RECRUITER JOB DETAILS - DEBUG VERSION
 # =========================================================
 

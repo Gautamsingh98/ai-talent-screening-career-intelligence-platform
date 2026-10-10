@@ -16,7 +16,7 @@ export default function MissingSkillsCard({
           <ul className="space-y-2">
             {yourSkills.length > 0 ? (
               yourSkills.map((skill) => (
-                <li key={skill}>✅ {skill}</li>
+                <li key={skill}> {skill}</li>
               ))
             ) : (
               <li className="text-gray-500">
@@ -35,7 +35,7 @@ export default function MissingSkillsCard({
           <ul className="space-y-2">
             {missingSkills.length > 0 ? (
               missingSkills.map((skill) => (
-                <li key={skill}>❌ {skill}</li>
+                <li key={skill}>{skill}</li>
               ))
             ) : (
               <li className="text-gray-500">

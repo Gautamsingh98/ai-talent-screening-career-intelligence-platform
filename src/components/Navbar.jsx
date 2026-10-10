@@ -190,7 +190,7 @@ export default function Navbar() {
             type="text"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search jobs..."
+            placeholder="Search jobs"
             className="bg-transparent outline-none ml-2 w-full"
           />
 
