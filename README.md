@@ -51,8 +51,6 @@ An AI-powered recruitment and career guidance web application designed to help c
 * Git and GitHub
 
 ## Project Screenshots
-Screenshots of the application are available in the `screenshots/` directory.
-## Project Screenshots
 ### Candidate Dashboard
 ![Candidate Dashboard](screenshots/candidate_dashboard.png)
 
