@@ -52,6 +52,21 @@ An AI-powered recruitment and career guidance web application designed to help c
 
 ## Project Screenshots
 Screenshots of the application are available in the `screenshots/` directory.
+## Project Screenshots
+### Candidate Dashboard
+![Candidate Dashboard](screenshots/candidate_dashboard.png)
+
+### AI Resume Analysis
+![Resume Analysis](screenshots/resume_analysis.png)
+
+### Skill Gap Analysis
+![Skill Gap Analysis](screenshots/skill_gap_analysis.png)
+
+### AI Interview Practice
+![Practice Interview](screenshots/practice_interview.png)
+
+### Recruiter Dashboard
+![Recruiter Dashboard](screenshots/recruiter_dashboard.png)
 
 ## Getting Started
 
@@ -110,5 +125,7 @@ This project is under active development. Features and documentation are updated
 
 ## Author
 **Gautam Singh**
+
 GitHub: https://github.com/Gautamsingh98
+
 LinkedIn: https://www.linkedin.com/in/gautam-singh-222759373
